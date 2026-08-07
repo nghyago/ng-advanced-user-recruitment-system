@@ -1,0 +1,1529 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>NG.Advanced User Recruitment System</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+  :root{
+    --bg: #F6F6F7;
+    --surface: #FFFFFF;
+    --surface-2: #FAFAFA;
+    --border: #E9E9EC;
+    --border-strong: #DBDBDF;
+    --text: #17171A;
+    --text-2: #6E6E76;
+    --text-3: #A6A6AC;
+    --accent: #5B4CFF;
+    --accent-hover: #4B3EE8;
+    --accent-soft: rgba(91,76,255,0.08);
+    --accent-soft-strong: rgba(91,76,255,0.14);
+    --green: #34C759;
+    --green-soft: rgba(52,199,89,0.12);
+    --amber: #B8860A;
+    --amber-soft: rgba(184,134,10,0.1);
+    --red: #D64545;
+    --red-soft: rgba(214,69,69,0.1);
+    --blue: #2F6FE4;
+    --blue-soft: rgba(47,111,228,0.1);
+    --teal: #0E9488;
+    --teal-soft: rgba(14,148,136,0.1);
+    --green-text: #1D8A42;
+    --disabled-bg: #E4E4E7;
+    --disabled-text: #A6A6AC;
+    --radius-lg: 14px;
+    --radius-md: 10px;
+    --radius-sm: 7px;
+    --shadow-card: 0 1px 2px rgba(20,20,30,0.04), 0 8px 24px rgba(20,20,30,0.04);
+    --shadow-pop: 0 2px 8px rgba(20,20,30,0.10), 0 12px 32px rgba(20,20,30,0.08);
+  }
+  :root[data-theme="dark"]{
+    --bg: #14141A;
+    --surface: #1C1C23;
+    --surface-2: #23232C;
+    --border: #33333E;
+    --border-strong: #45454F;
+    --text: #F2F2F5;
+    --text-2: #A8A8B3;
+    --text-3: #6E6E78;
+    --accent: #8B7FFF;
+    --accent-hover: #9D93FF;
+    --accent-soft: rgba(139,127,255,0.18);
+    --accent-soft-strong: rgba(139,127,255,0.28);
+    --green: #34C759;
+    --green-soft: rgba(52,199,89,0.18);
+    --green-text: #4ADE80;
+    --amber: #E8B93B;
+    --amber-soft: rgba(232,185,59,0.16);
+    --red: #FF7A7A;
+    --red-soft: rgba(255,122,122,0.16);
+    --blue: #6E9CFB;
+    --blue-soft: rgba(110,156,251,0.18);
+    --teal: #2DD4BF;
+    --teal-soft: rgba(45,212,191,0.16);
+    --disabled-bg: #2A2A33;
+    --disabled-text: #5C5C66;
+    --shadow-card: 0 1px 2px rgba(0,0,0,0.3), 0 8px 24px rgba(0,0,0,0.35);
+    --shadow-pop: 0 2px 8px rgba(0,0,0,0.4), 0 12px 32px rgba(0,0,0,0.4);
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;}
+  body{
+    background: var(--bg);
+    color: var(--text);
+    font-family: "Inter", -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", sans-serif;
+    font-size: 14px;
+    -webkit-font-smoothing: antialiased;
+    padding: 32px 0 80px;
+    transition: background-color .2s, color .2s;
+  }
+  .page{ max-width: 1360px; margin: 0 auto; padding: 0 32px; }
+
+  /* ---------- top bar ---------- */
+  .topbar{
+    display:flex; align-items:center; justify-content:space-between;
+    margin-bottom: 28px; gap:16px; flex-wrap:wrap;
+  }
+  .topbar h1{
+    font-size: 16px; font-weight: 600; margin:0; letter-spacing: -0.01em;
+  }
+  .topbar .sub{ color: var(--text-2); font-size:12.5px; margin-top:2px; }
+  .live-stats{ display:flex; gap:8px; flex-wrap:wrap; }
+  .chip{
+    display:flex; align-items:baseline; gap:5px; background: var(--surface);
+    border:1px solid var(--border); border-radius: 999px; padding: 6px 12px;
+    font-size:12px; color: var(--text-2); box-shadow: var(--shadow-card);
+  }
+  .chip b{ font-size:13px; color: var(--text); font-weight:600; }
+
+  /* ---------- stepper ---------- */
+  .stepper{
+    display:flex; align-items:center; gap:0; margin-bottom:20px;
+    background: var(--surface); border:1px solid var(--border); border-radius: var(--radius-lg);
+    padding: 6px; box-shadow: var(--shadow-card);
+  }
+  .step-btn{
+    flex:1; display:flex; align-items:center; gap:9px; padding:10px 16px;
+    border-radius: var(--radius-md); cursor:pointer; border:none; background:transparent;
+    font-family:inherit; text-align:left; transition: background-color .15s;
+  }
+  .step-btn:hover{ background: var(--surface-2); }
+  .step-btn.active{ background: var(--surface-2); }
+  .step-num{
+    width:22px; height:22px; border-radius:50%; display:flex; align-items:center; justify-content:center;
+    font-size:11.5px; font-weight:600; flex-shrink:0; background: var(--border);
+    color: var(--text-2); transition: all .15s;
+  }
+  .step-btn.active .step-num{ background: var(--text-2); color:#fff; }
+  .step-btn.done .step-num{ background: var(--green); color:#fff; }
+  .step-label{ font-size:13px; font-weight:500; color: var(--text); }
+  .step-btn.active .step-label{ color: var(--text); font-weight:600; }
+  .step-divider{ width:1px; height:22px; background: var(--border); flex-shrink:0; }
+
+  /* ---------- cards / collapsibles ---------- */
+  .card{
+    background: var(--surface); border:1px solid var(--border); border-radius: var(--radius-lg);
+    margin-bottom:16px; box-shadow: var(--shadow-card); overflow:hidden;
+  }
+  .card > summary{
+    list-style:none; cursor:pointer; padding:16px 20px; display:flex; align-items:center;
+    justify-content:space-between; user-select:none;
+  }
+  .card > summary::-webkit-details-marker{ display:none; }
+  .card-title{ display:flex; align-items:center; gap:10px; }
+  .card-title .badge-count{
+    font-size:11px; color: var(--text-2); background: var(--surface-2); border:1px solid var(--border);
+    border-radius:999px; padding:1px 8px;
+  }
+  .card h2{ font-size:14px; font-weight:600; margin:0; }
+  .chevron{ color: var(--text-3); transition: transform .2s ease; flex-shrink:0; }
+  details[open] > summary .chevron{ transform: rotate(180deg); }
+  .card-body{ padding: 0 20px 20px; }
+
+  label.field-label{
+    display:block; font-size:12px; font-weight:500; color: var(--text-2); margin-bottom:6px;
+  }
+  select, textarea, input[type=text]{
+    width:100%; background: var(--surface-2); border:1px solid var(--border);
+    color: var(--text); border-radius: var(--radius-sm); padding: 9px 11px; font-size: 13.5px;
+    font-family: inherit; transition: border-color .15s, background-color .15s;
+  }
+  select:focus, textarea:focus, input:focus{
+    outline:none; border-color: var(--accent); background: var(--surface);
+  }
+  textarea{ resize: vertical; min-height: 84px; line-height:1.5; }
+
+  .row{display:flex; gap:14px; flex-wrap:wrap;}
+  .field{flex:1; min-width: 200px;}
+
+  .btn{
+    background: var(--accent); color:#fff; border:none; border-radius: var(--radius-sm);
+    padding: 10px 18px; font-size: 13.5px; font-weight:600; cursor:pointer; font-family:inherit;
+    transition: background-color .15s;
+  }
+  .btn:hover{ background: var(--accent-hover); }
+  .btn.ghost{ background: transparent; border:1px solid var(--border); color: var(--text); font-weight:500; }
+  .btn.ghost:hover{ border-color: var(--border-strong); background: var(--surface-2); }
+  .btn.small{ padding:5px 11px; font-size:12px; border-radius:6px; }
+  .btn.disabled, a.btn.disabled{ background: var(--disabled-bg); color: var(--disabled-text); cursor:not-allowed; pointer-events:none; }
+  a.btn{ display:inline-flex; align-items:center; gap:5px; text-decoration:none; }
+
+  /* dropzone */
+  .drop{
+    border: 1.5px dashed var(--border-strong); border-radius: var(--radius-md);
+    padding: 26px 16px; text-align:center; cursor:pointer; transition: border-color .15s, background .15s;
+    color: var(--text-2);
+  }
+  .drop:hover, .drop.drag{ border-color: var(--accent); background: var(--accent-soft); }
+  .drop svg{ margin-bottom:8px; color: var(--text-3); }
+  .drop .big{ font-size: 13.5px; color: var(--text); font-weight:500; }
+  .drop .small{ font-size: 11.5px; margin-top:2px; }
+  input[type=file]{display:none;}
+
+  .file-chip{
+    display:flex; align-items:center; justify-content:space-between; gap:12px;
+    background: var(--surface-2); border:1px solid var(--border); border-radius: var(--radius-sm);
+    padding:10px 14px;
+  }
+  .file-chip .name{ font-size:13px; font-weight:500; }
+  .file-chip .count{ font-size:11.5px; color: var(--text-2); margin-top:1px; }
+
+  .banner{
+    margin-top:12px; display:flex; align-items:center; gap:8px; background: var(--green-soft);
+    color: var(--green-text); border-radius: var(--radius-sm); padding:9px 13px; font-size:12px; font-weight:500;
+  }
+  .banner svg{ flex-shrink:0; }
+
+  /* formatting toolbar */
+  .toolbar{ display:flex; align-items:center; gap:5px; margin-bottom:8px; flex-wrap:wrap; }
+  .tbtn{
+    background: var(--surface-2); border:1px solid var(--border); color: var(--text);
+    border-radius:6px; padding:5px 10px; font-size:12.5px; cursor:pointer; line-height:1;
+    font-family:inherit; transition: border-color .15s;
+  }
+  .tbtn:hover{ border-color: var(--border-strong); }
+  .tbtn.link{ background: var(--accent-soft); border-color: transparent; color: var(--accent); font-weight:600; }
+  .tbtn.link:hover{ background: var(--accent-soft-strong); }
+  .microcopy{ font-size:11.5px; margin-top:6px; min-height:14px; }
+  .microcopy.ok{ color: var(--green-text); }
+  .microcopy.warn{ color: var(--amber); }
+
+  details.preview-toggle{ margin-top:8px; }
+  details.preview-toggle > summary{
+    list-style:none; cursor:pointer; font-size:12px; color: var(--text-2); display:inline-flex;
+    align-items:center; gap:5px; user-select:none;
+  }
+  details.preview-toggle > summary::-webkit-details-marker{ display:none; }
+  details.preview-toggle > summary .chevron{ width:11px; height:11px; }
+  .preview-box{
+    margin-top:8px; background: var(--surface-2); border:1px solid var(--border); border-radius: var(--radius-sm);
+    padding:12px 14px; font-size:13px; line-height:1.55; white-space:pre-wrap; word-break:break-word;
+  }
+  .preview-box a{ color: var(--accent); }
+  .msg-block{ margin-bottom:22px; padding-bottom:22px; border-bottom:1px solid var(--border); }
+  .msg-block:last-child{ margin-bottom:0; padding-bottom:0; border-bottom:none; }
+
+  /* ---------- list toolbar ---------- */
+  .list-toolbar{
+    display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap;
+    margin-bottom:14px;
+  }
+  .search-wrap{ position:relative; width:230px; }
+  .search-wrap svg{
+    position:absolute; left:10px; top:50%; transform:translateY(-50%); color: var(--text-3); pointer-events:none;
+  }
+  .search-wrap input{ padding-left:30px; }
+
+  .segmented{
+    display:inline-flex; flex-wrap:wrap; background: var(--surface-2); border:1px solid var(--border);
+    border-radius:999px; padding:3px; gap:2px;
+  }
+  .segmented button{
+    border:none; background:transparent; font-family:inherit; font-size:12px; font-weight:500;
+    color: var(--text-2); padding:5px 13px; border-radius:999px; cursor:pointer; transition: all .15s;
+  }
+  .segmented button.active{ background: var(--surface); color: var(--text); box-shadow: var(--shadow-card); }
+
+  .icon-btn{
+    width:28px; height:28px; border-radius:7px; display:inline-flex; align-items:center; justify-content:center;
+    border:1px solid var(--border); background: var(--surface); color: var(--text-2); cursor:pointer; flex-shrink:0;
+    transition: all .15s; text-decoration:none;
+  }
+  .icon-btn:hover{ border-color: var(--border-strong); color: var(--text); }
+  .icon-btn.disabled{ opacity:.4; pointer-events:none; }
+  .toolbar-actions{ display:flex; gap:6px; }
+
+  /* ---------- table ---------- */
+  .table-wrap{ border:1px solid var(--border); border-radius: var(--radius-md); overflow:hidden; }
+  table{ width:100%; border-collapse:collapse; font-size:13px; }
+  thead th{
+    text-align:left; font-weight:500; font-size:11.5px; color: var(--text-2);
+    padding:10px 14px; background: var(--surface-2); border-bottom:1px solid var(--border);
+    position:sticky; top:0;
+  }
+  tbody{ display:block; max-height:520px; overflow-y:auto; }
+  thead, tbody tr{ display:table; width:100%; table-layout:fixed; }
+  tbody td{ padding:10px 14px; border-bottom:1px solid var(--border); vertical-align:middle; }
+  tbody tr:last-child td{ border-bottom:none; }
+  tbody tr:hover{ background: var(--surface-2); }
+  .col-status{ width:10%; }
+  .col-contact{ width:16%; }
+  .col-switch{ width:11%; }
+  .col-link{ width:19%; }
+  .contact-name{ font-weight:500; }
+  .contact-phone{ font-size:12px; color: var(--text-2); margin-top:1px; font-variant-numeric: tabular-nums; }
+  .cell-flex{ display:flex; align-items:center; gap:8px; }
+  .badge-invalid{
+    display:inline-block; font-size:10.5px; font-weight:600; color: var(--red); background: var(--red-soft);
+    border-radius:999px; padding:2px 8px; margin-top:2px;
+  }
+  .link-input{
+    background: var(--surface-2); border:1px solid var(--border); border-radius:6px;
+    padding:6px 9px; font-size:12.5px; width:100%;
+  }
+  .link-input:focus{ background: var(--surface); border-color: var(--accent); outline:none; }
+  .empty-state{ text-align:center; color: var(--text-2); padding:48px 12px; font-size:13px; }
+
+  /* status geral do contato */
+  .status-pill{
+    display:inline-block; font-size:10.5px; font-weight:600; border-radius:999px;
+    padding:2px 8px; margin-top:3px; white-space:nowrap;
+  }
+  .status-pill.st-disponivel{ color: var(--text-2); background: var(--surface-2); border:1px solid var(--border); }
+  .status-pill.st-convidado{ color: var(--accent); background: var(--accent-soft); }
+  .status-pill.st-agendado{ color: var(--teal); background: var(--teal-soft); }
+  .status-pill.st-lembrado{ color: var(--amber); background: var(--amber-soft); }
+  .status-pill.st-entrevistado{ color: var(--blue); background: var(--blue-soft); }
+  .status-pill.st-concluido{ color: var(--green-text); background: var(--green-soft); }
+  .status-pill.st-sem-exito{ color: var(--red); background: var(--red-soft); }
+
+  /* status geral clicável: abre menu para marcar manualmente como Concluído / Sem êxito */
+  .status-pill-wrap{ position:relative; display:inline-block; }
+  .status-pill-wrap > summary{ list-style:none; cursor:pointer; }
+  .status-pill-wrap > summary::-webkit-details-marker{ display:none; }
+  .status-pill-wrap > summary::marker{ content:''; }
+  .status-pill-wrap > summary:hover .status-pill{ filter:brightness(0.95); }
+  .status-menu{
+    position:absolute; top:calc(100% + 4px); left:0; z-index:30; min-width:150px;
+    background: var(--surface); border:1px solid var(--border); border-radius: var(--radius-sm);
+    box-shadow: var(--shadow-pop); padding:4px; display:flex; flex-direction:column; gap:1px;
+  }
+  .status-menu button{
+    all:unset; cursor:pointer; padding:7px 10px; border-radius:6px; font-size:12px;
+    font-weight:500; color: var(--text); white-space:nowrap; font-family:inherit;
+  }
+  .status-menu button:hover{ background: var(--surface-2); }
+  .status-menu button.opt-concluido{ color: var(--green-text); }
+  .status-menu button.opt-sem-exito{ color: var(--red); }
+  .status-menu button.opt-reset{ color: var(--text-2); border-top:1px solid var(--border); margin-top:2px; padding-top:8px; }
+
+  /* tags clicáveis: aparecem no lugar do botão depois que a etapa é concluída; clicar desfaz */
+  .cell-tag{
+    display:inline-flex; align-items:center; gap:4px; font-size:11.5px; font-weight:600;
+    border-radius:999px; padding:4px 10px; cursor:pointer; border:none; font-family:inherit;
+    transition: opacity .15s;
+  }
+  .cell-tag:hover{ opacity:.7; }
+  .cell-tag.tag-enviado{ color: var(--blue); background: var(--blue-soft); }
+
+  .cell-muted{ color: var(--text-3); font-size:13px; }
+
+  tbody tr.row-done{ background: var(--green-soft); }
+  tbody tr.row-done:hover{ background: var(--green-soft); }
+
+  /* iOS switch */
+  .switch{ position:relative; display:inline-flex; width:38px; height:23px; flex-shrink:0; cursor:pointer; }
+  .switch input{ opacity:0; width:0; height:0; position:absolute; }
+  .switch .track{
+    position:absolute; inset:0; background: var(--border-strong); border-radius:999px;
+    transition: background-color .18s ease;
+  }
+  .switch .thumb{
+    position:absolute; top:2px; left:2px; width:19px; height:19px; border-radius:50%; background:#fff;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.22), 0 1px 1px rgba(0,0,0,0.08);
+    transition: transform .18s cubic-bezier(.34,1.56,.64,1);
+  }
+  .switch input:checked + .track{ background: var(--green); }
+  .switch input:checked + .track + .thumb{ transform: translateX(15px); }
+  .switch input:disabled + .track{ opacity:.45; cursor:not-allowed; }
+
+  ::-webkit-scrollbar{ width:9px; height:9px; }
+  ::-webkit-scrollbar-thumb{ background: var(--border-strong); border-radius:5px; }
+  ::-webkit-scrollbar-thumb:hover{ background: var(--text-3); }
+  .hidden{ display:none !important; }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <div class="topbar">
+    <div>
+      <h1>NG.Advanced User Recruitment System</h1>
+      <div class="sub">Convite, agendamento e lembrete via WhatsApp</div>
+    </div>
+    <div style="display:flex; align-items:center; gap:10px;">
+      <div class="live-stats hidden" id="liveStats"></div>
+      <button class="icon-btn" id="themeToggle" title="Alternar tema claro/escuro" style="width:32px; height:32px;"></button>
+    </div>
+  </div>
+
+  <div class="stepper">
+    <button class="step-btn active" id="stepBtn1" data-target="step1">
+      <span class="step-num" data-num="1">1</span><span class="step-label">Planilha</span>
+    </button>
+    <div class="step-divider"></div>
+    <button class="step-btn" id="stepBtn2" data-target="step2">
+      <span class="step-num" data-num="2">2</span><span class="step-label">Mensagens</span>
+    </button>
+    <div class="step-divider"></div>
+    <button class="step-btn" id="stepBtn3" data-target="step3">
+      <span class="step-num" data-num="3">3</span><span class="step-label">Envio</span>
+    </button>
+  </div>
+
+  <details class="card" id="step1" open>
+    <summary>
+      <div class="card-title"><h2>Planilha de contatos</h2></div>
+      <svg class="chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
+    </summary>
+    <div class="card-body">
+      <div class="drop" id="dropZone">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15V4"/><path d="M7 8l5-5 5 5"/><path d="M4 15v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3"/></svg>
+        <div class="big">Arraste sua planilha ou clique para escolher</div>
+        <div class="small">.xlsx, .xls ou .csv</div>
+        <input type="file" id="fileInput" accept=".xlsx,.xls,.csv">
+      </div>
+      <div class="file-chip hidden" id="fileInfo" style="margin-top:12px;">
+        <div>
+          <div class="name" id="fileName"></div>
+          <div class="count" id="fileCount"></div>
+        </div>
+        <button class="btn ghost small" id="changeFileBtn">Trocar arquivo</button>
+      </div>
+      <div class="banner hidden" id="progressBanner">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
+        <span id="progressBannerText"></span>
+      </div>
+
+      <div class="row hidden" id="columnPickers" style="margin-top:16px;">
+        <div class="field">
+          <label class="field-label">Coluna do telefone</label>
+          <select id="phoneCol"></select>
+        </div>
+        <div class="field">
+          <label class="field-label">Coluna do nome</label>
+          <select id="nameCol"></select>
+        </div>
+      </div>
+
+      <div class="field hidden" id="calendarLinkWrap" style="margin-top:16px;">
+        <label class="field-label">Link do calendário (agendamento)</label>
+        <input type="text" id="calendarLinkInput" placeholder="https://calendar.app.google/...">
+      </div>
+    </div>
+  </details>
+
+  <details class="card" id="step2" open>
+    <summary>
+      <div class="card-title"><h2>Mensagens</h2><button type="button" class="btn ghost small" id="presetBtn">Preset</button></div>
+      <svg class="chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
+    </summary>
+    <div class="card-body">
+
+      <div class="msg-block">
+        <label class="field-label">Convite</label>
+        <div class="toolbar">
+          <button type="button" class="tbtn" data-wrap="*" data-target="messageBox" title="Negrito"><b>N</b></button>
+          <button type="button" class="tbtn" data-wrap="_" data-target="messageBox" title="Itálico"><i>I</i></button>
+          <button type="button" class="tbtn" data-wrap="~" data-target="messageBox" title="Tachado"><s>T</s></button>
+          <button type="button" class="tbtn" data-wrap="```" data-target="messageBox" title="Monoespaçado" style="font-family:monospace;">&lt;/&gt;</button>
+          <button type="button" class="tbtn" id="insertNameBtn" title="Inserir primeiro nome do contato">@nome</button>
+          <button type="button" class="tbtn link" id="insertCalendarBtn" title="Inserir o link do calendário">#link-calendar</button>
+        </div>
+        <textarea id="messageBox" placeholder="Oi @nome! Tudo bem? Somos do time de pesquisa da NG.CASH..."></textarea>
+        <details class="preview-toggle">
+          <summary><svg class="chevron" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>Pré-visualizar</summary>
+          <div class="preview-box" id="preview"></div>
+        </details>
+      </div>
+
+      <div class="msg-block">
+        <label class="field-label">Confirmação (lembrete antes da call)</label>
+        <div class="toolbar">
+          <button type="button" class="tbtn" data-wrap="*" data-target="messageBox2" title="Negrito"><b>N</b></button>
+          <button type="button" class="tbtn" data-wrap="_" data-target="messageBox2" title="Itálico"><i>I</i></button>
+          <button type="button" class="tbtn" data-wrap="~" data-target="messageBox2" title="Tachado"><s>T</s></button>
+          <button type="button" class="tbtn" data-wrap="```" data-target="messageBox2" title="Monoespaçado" style="font-family:monospace;">&lt;/&gt;</button>
+          <button type="button" class="tbtn" id="insertNameBtn2" title="Inserir primeiro nome do contato">@nome</button>
+          <button type="button" class="tbtn link" id="insertLinkBtn2" title="Inserir o link do Google Meet">#link-meet</button>
+        </div>
+        <textarea id="messageBox2" placeholder="Oi @nome! Passando pra lembrar da nossa call. Aqui está o link: #link-meet"></textarea>
+        <div class="microcopy" id="linkTokenStatus"></div>
+        <div class="microcopy warn" id="nameWarning2"></div>
+        <details class="preview-toggle">
+          <summary><svg class="chevron" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>Pré-visualizar</summary>
+          <div class="preview-box" id="preview2"></div>
+        </details>
+      </div>
+
+      <div class="msg-block">
+        <label class="field-label">Recompensa (mensagem final, após a entrevista)</label>
+        <div class="toolbar">
+          <button type="button" class="tbtn" data-wrap="*" data-target="messageBox3" title="Negrito"><b>N</b></button>
+          <button type="button" class="tbtn" data-wrap="_" data-target="messageBox3" title="Itálico"><i>I</i></button>
+          <button type="button" class="tbtn" data-wrap="~" data-target="messageBox3" title="Tachado"><s>T</s></button>
+          <button type="button" class="tbtn" data-wrap="```" data-target="messageBox3" title="Monoespaçado" style="font-family:monospace;">&lt;/&gt;</button>
+          <button type="button" class="tbtn" id="insertNameBtn3" title="Inserir primeiro nome do contato">@nome</button>
+          <button type="button" class="tbtn link" id="insertDayBtn3" title="Inserir o próximo dia de pagamento (calculado automaticamente)">#dia-pix</button>
+        </div>
+        <textarea id="messageBox3">Já encaminhei para o time financeiro, o Pix deve cair pra você no próximo dia #dia-pix. Muito obrigado pela participação!</textarea>
+        <div class="microcopy warn" id="nameWarning3"></div>
+        <details class="preview-toggle">
+          <summary><svg class="chevron" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>Pré-visualizar</summary>
+          <div class="preview-box" id="preview3"></div>
+        </details>
+      </div>
+
+      <button class="btn" id="generateBtn" style="margin-top:6px;">Gerar lista de envio</button>
+    </div>
+  </details>
+
+  <details class="card hidden" id="step3">
+    <summary>
+      <div class="card-title"><h2>Envio</h2><span class="badge-count" id="listCount">0 contatos</span></div>
+      <svg class="chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
+    </summary>
+    <div class="card-body">
+      <div class="list-toolbar">
+        <div class="search-wrap">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+          <input type="text" id="searchBox" placeholder="Buscar contato...">
+        </div>
+        <div class="segmented" id="filterTabs">
+          <button class="active" data-filter="all">Todos</button>
+          <button data-filter="disponivel">Disponível</button>
+          <button data-filter="convidado">Convidado</button>
+          <button data-filter="agendado">Agendado</button>
+          <button data-filter="lembrado">Lembrado</button>
+          <button data-filter="entrevistado">Entrevistado</button>
+          <button data-filter="concluido">Concluído</button>
+        </div>
+        <div class="toolbar-actions">
+          <button class="icon-btn" id="shuffleBtn" title="Embaralhar ordem da lista">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 3 21 3 21 8"></polyline><line x1="4" y1="20" x2="21" y2="3"></line><polyline points="21 16 21 21 16 21"></polyline><line x1="15" y1="15" x2="21" y2="21"></line><line x1="4" y1="4" x2="9" y2="9"></line></svg>
+          </button>
+          <button class="icon-btn" id="resetBtn" title="Zerar progresso">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
+          </button>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th class="col-status">Status</th>
+              <th class="col-contact">Contato</th>
+              <th class="col-switch">Convite</th>
+              <th class="col-switch">Agendamento</th>
+              <th class="col-link">Link do Meet</th>
+              <th class="col-switch">Lembrete</th>
+              <th class="col-switch">Entrevista</th>
+              <th class="col-switch">Recompensa</th>
+            </tr>
+          </thead>
+          <tbody id="tbody"></tbody>
+        </table>
+        <div class="empty-state hidden" id="emptyState">Nenhum contato encontrado.</div>
+      </div>
+      <div style="display:flex; justify-content:flex-end; align-items:center; gap:10px; margin-top:12px;">
+        <span class="microcopy" id="lastSavedText" style="margin:0; min-height:auto;"></span>
+        <button class="btn small" id="exportBtn">Salvar progresso</button>
+      </div>
+    </div>
+  </details>
+
+</div>
+
+<script>
+/* ============================== state ============================== */
+const STORAGE_KEY = 'wa-sender:progress-v2';
+const STORAGE_KEY_V1 = 'wa-sender:progress-v1';
+const THEME_KEY = 'wa-sender:theme';
+const LAST_SAVED_KEY = 'wa-sender:last-saved';
+const MSG1_COL_NAME = 'modelo_mensagem_convite';
+const MSG2_COL_NAME = 'modelo_mensagem_confirmacao';
+const MSG3_COL_NAME = 'modelo_mensagem_recompensa';
+const CALENDAR_LINK_COL_NAME = 'link_calendario';
+const LAST_SAVED_COL_NAME = 'salvo_em';
+const NAME_TOKEN = /@nome/gi;
+const LINK_MEET_TOKEN = /#link-meet/gi;
+const LINK_CALENDAR_TOKEN = /#link-calendar/gi;
+const DAY_TOKEN = /#dia-pix/gi;
+
+let contacts = [];
+let statusMap = {};
+let currentFilter = 'all';
+let filterSnapshot = null; // null = mostra tudo (aba "Todos"); Set = trava a lista da aba até o usuário trocar de aba
+let rawRows = [];
+let headers = [];
+let statusColsDetected = null;
+let reservedColumnNames = [];
+let reminderTemplate = '';
+let rewardTemplate = '';
+let calendarLink = '';
+let activeNameIdx = -1;
+
+/* ============================== refs ============================== */
+const dropZone = document.getElementById('dropZone');
+const fileInput = document.getElementById('fileInput');
+const fileInfo = document.getElementById('fileInfo');
+const fileNameEl = document.getElementById('fileName');
+const fileCountEl = document.getElementById('fileCount');
+const changeFileBtn = document.getElementById('changeFileBtn');
+const columnPickers = document.getElementById('columnPickers');
+const calendarLinkWrap = document.getElementById('calendarLinkWrap');
+const calendarLinkInput = document.getElementById('calendarLinkInput');
+const phoneColSel = document.getElementById('phoneCol');
+const nameColSel = document.getElementById('nameCol');
+const messageBox = document.getElementById('messageBox');
+const messageBox2 = document.getElementById('messageBox2');
+const messageBox3 = document.getElementById('messageBox3');
+const generateBtn = document.getElementById('generateBtn');
+const tbody = document.getElementById('tbody');
+const searchBox = document.getElementById('searchBox');
+const emptyState = document.getElementById('emptyState');
+const shuffleBtn = document.getElementById('shuffleBtn');
+const lastSavedText = document.getElementById('lastSavedText');
+const exportBtn = document.getElementById('exportBtn');
+const resetBtn = document.getElementById('resetBtn');
+const insertNameBtn = document.getElementById('insertNameBtn');
+const insertNameBtn2 = document.getElementById('insertNameBtn2');
+const insertLinkBtn2 = document.getElementById('insertLinkBtn2');
+const insertCalendarBtn = document.getElementById('insertCalendarBtn');
+const presetBtn = document.getElementById('presetBtn');
+const insertNameBtn3 = document.getElementById('insertNameBtn3');
+const insertDayBtn3 = document.getElementById('insertDayBtn3');
+const nameWarning2 = document.getElementById('nameWarning2');
+const linkTokenStatus = document.getElementById('linkTokenStatus');
+const nameWarning3 = document.getElementById('nameWarning3');
+const step1 = document.getElementById('step1');
+const step2 = document.getElementById('step2');
+const step3 = document.getElementById('step3');
+const stepBtn1 = document.getElementById('stepBtn1');
+const stepBtn2 = document.getElementById('stepBtn2');
+const stepBtn3 = document.getElementById('stepBtn3');
+const themeToggle = document.getElementById('themeToggle');
+
+/* ============================== helpers ============================== */
+function getStatus(phoneClean){
+  return statusMap[phoneClean] || { sent:false, scheduled:false, meetLink:'', reminderSent:false, done:false, rewardSent:false, override:null };
+}
+function setStatus(phoneClean, patch){
+  const current = getStatus(phoneClean);
+  statusMap[phoneClean] = Object.assign({}, current, patch);
+  saveStatusMap();
+  updateLiveStats();
+}
+
+/* status geral do contato: em qual "momento" da jornada ele está.
+   "override" é um ajuste manual (Concluído / Sem êxito) que tem prioridade sobre o cálculo automático */
+function getOverallStatus(status){
+  if (status.override === 'concluido') return {key:'concluido', label:'Concluído', cls:'st-concluido'};
+  if (status.override === 'sem_exito') return {key:'sem_exito', label:'Sem êxito', cls:'st-sem-exito'};
+  if (status.rewardSent) return {key:'concluido', label:'Concluído', cls:'st-concluido'};
+  if (status.done) return {key:'entrevistado', label:'Entrevistado', cls:'st-entrevistado'};
+  if (status.reminderSent) return {key:'lembrado', label:'Lembrado', cls:'st-lembrado'};
+  if (status.scheduled) return {key:'agendado', label:'Agendado', cls:'st-agendado'};
+  if (status.sent) return {key:'convidado', label:'Convidado', cls:'st-convidado'};
+  return {key:'disponivel', label:'Disponível', cls:'st-disponivel'};
+}
+
+/* recalcula quais contatos pertencem à aba de filtro ativa; enquanto a aba não mudar,
+   um contato que mudou de status continua aparecendo (evita a lista "sumir" embaixo do usuário) */
+function refreshFilterSnapshot(){
+  if (currentFilter === 'all'){
+    filterSnapshot = null;
+  } else {
+    filterSnapshot = new Set(
+      contacts.filter(c => getOverallStatus(getStatus(c.phoneClean)).key === currentFilter).map(c => c.phoneClean)
+    );
+  }
+}
+
+function firstNameCapitalized(fullName){
+  if (!fullName) return '';
+  const first = String(fullName).trim().split(/\s+/)[0] || '';
+  if (!first) return '';
+  return first.charAt(0).toLocaleUpperCase('pt-BR') + first.slice(1).toLocaleLowerCase('pt-BR');
+}
+
+const NAME_PARTICLES = new Set(['de','da','do','das','dos','e']);
+function capitalizeFullName(fullName){
+  if (!fullName) return '';
+  return String(fullName).trim().split(/\s+/).map((word, idx) => {
+    const lower = word.toLocaleLowerCase('pt-BR');
+    if (idx > 0 && NAME_PARTICLES.has(lower)) return lower;
+    return lower.charAt(0).toLocaleUpperCase('pt-BR') + lower.slice(1);
+  }).join(' ');
+}
+
+function cleanPhone(raw){
+  let digits = String(raw).replace(/\D/g, '');
+  if (!digits) return {clean:'', valid:false};
+  digits = digits.replace(/^0+/, '');
+  if (digits.startsWith('55') && (digits.length === 12 || digits.length === 13)) {
+    return {clean:digits, valid:true};
+  }
+  if (digits.length === 10 || digits.length === 11) {
+    return {clean: '55' + digits, valid:true};
+  }
+  return {clean: digits, valid: digits.length >= 10 && digits.length <= 13};
+}
+
+function formatPhoneDisplay(clean, fallbackRaw){
+  if (!clean) return fallbackRaw || '';
+  const m = clean.match(/^55(\d{2})(\d{4,5})(\d{4})$/);
+  if (m) return '+55 ' + m[1] + ' ' + m[2] + '-' + m[3];
+  return '+' + clean;
+}
+
+function parseBool(value, trueWord){
+  return String(value || '').trim().toLowerCase() === trueWord;
+}
+
+function escapeHtml(str){
+  return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function encodeWhatsAppText(text){
+  return encodeURIComponent(text)
+    .replace(/%20/g, '+')
+    .replace(/!/g, '%21')
+    .replace(/'/g, '%27')
+    .replace(/\(/g, '%28')
+    .replace(/\)/g, '%29')
+    .replace(/\*/g, '%2A');
+}
+
+function buildWaLink(phone, text){
+  return 'https://web.whatsapp.com/send/?phone=' + phone + '&text=' + encodeWhatsAppText(text);
+}
+
+function normalizeMeetLink(value){
+  const v = String(value || '').trim();
+  if (!v) return '';
+  return /^https?:\/\//i.test(v) ? v : 'https://' + v;
+}
+
+/* Tabela de pagamento: NF recebida entre 16-25 -> paga dia 05 (mês seguinte)
+                        NF recebida entre 26-05 -> paga dia 15 (mês seguinte se dia>=26, mesmo mês se dia<=5)
+                        NF recebida entre 06-15 -> paga dia 25 (mesmo mês) */
+function nextPaymentDay(refDate){
+  const day = refDate.getDate();
+  let payDay, monthOffset;
+  if (day >= 16 && day <= 25){
+    payDay = 5; monthOffset = 1;
+  } else if (day >= 26 || day <= 5){
+    payDay = 15; monthOffset = (day >= 26) ? 1 : 0;
+  } else {
+    payDay = 25; monthOffset = 0;
+  }
+  return String(payDay).padStart(2, '0');
+}
+
+function renderWhatsAppPreview(text){
+  let safe = escapeHtml(text);
+  safe = safe.replace(/```([^`]+)```/g, '<code>$1</code>');
+  safe = safe.replace(/(^|[\s])\*([^\*\n]+)\*(?=[\s.,!?]|$)/g, '$1<b>$2</b>');
+  safe = safe.replace(/(^|[\s])_([^_\n]+)_(?=[\s.,!?]|$)/g, '$1<i>$2</i>');
+  safe = safe.replace(/(^|[\s])~([^~\n]+)~(?=[\s.,!?]|$)/g, '$1<s>$2</s>');
+  safe = safe.replace(/(https?:\/\/[^\s]+)/g, '<a href="$1" target="_blank" rel="noopener">$1</a>');
+  return safe;
+}
+
+function makeSwitch(checked, disabled, onChange){
+  const label = document.createElement('label');
+  label.className = 'switch';
+  const input = document.createElement('input');
+  input.type = 'checkbox';
+  input.checked = checked;
+  input.disabled = !!disabled;
+  const track = document.createElement('span');
+  track.className = 'track';
+  const thumb = document.createElement('span');
+  thumb.className = 'thumb';
+  input.addEventListener('change', () => onChange(input.checked));
+  label.appendChild(input);
+  label.appendChild(track);
+  label.appendChild(thumb);
+  return label;
+}
+
+/* ============================== tema (claro/escuro) ============================== */
+const ICON_MOON = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>';
+const ICON_SUN = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="M4.93 4.93l1.41 1.41"/><path d="M17.66 17.66l1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="M6.34 17.66l-1.41 1.41"/><path d="M19.07 4.93l-1.41 1.41"/></svg>';
+
+function applyTheme(theme){
+  document.documentElement.setAttribute('data-theme', theme);
+  themeToggle.innerHTML = theme === 'dark' ? ICON_SUN : ICON_MOON;
+  themeToggle.title = theme === 'dark' ? 'Mudar para tema claro' : 'Mudar para tema escuro';
+}
+async function loadTheme(){
+  let theme = 'light';
+  try{
+    const res = await window.storage.get(THEME_KEY);
+    if (res && res.value === 'dark') theme = 'dark';
+  }catch(e){ /* mantém claro por padrão */ }
+  applyTheme(theme);
+}
+themeToggle.addEventListener('click', async () => {
+  const next = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+  applyTheme(next);
+  try{ await window.storage.set(THEME_KEY, next); }catch(e){ /* preferência não persistida, sem problema */ }
+});
+loadTheme();
+
+/* ============================== último salvamento ============================== */
+function updateLastSavedText(date){
+  const dateStr = date.toLocaleDateString('pt-BR');
+  const timeStr = date.toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'});
+  lastSavedText.textContent = 'Salvo em ' + dateStr + ' às ' + timeStr;
+}
+async function loadLastSaved(){
+  try{
+    const res = await window.storage.get(LAST_SAVED_KEY);
+    if (res && res.value) updateLastSavedText(new Date(res.value));
+  }catch(e){ /* ainda não foi salvo nenhuma vez */ }
+}
+loadLastSaved();
+
+/* ============================== steps / stepper ============================== */
+const ICON_CHECK = '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>';
+function setStepDoneIcon(btn, isDone){
+  const numSpan = btn.querySelector('.step-num');
+  numSpan.innerHTML = isDone ? ICON_CHECK : numSpan.dataset.num;
+}
+function refreshStepper(){
+  stepBtn1.classList.toggle('active', step1.open);
+  stepBtn2.classList.toggle('active', step2.open);
+  stepBtn3.classList.toggle('active', step3.open);
+  const step1Done = rawRows.length > 0;
+  const step2Done = messageBox.value.trim() !== '';
+  const step3Done = contacts.length > 0;
+  stepBtn1.classList.toggle('done', step1Done);
+  stepBtn2.classList.toggle('done', step2Done);
+  stepBtn3.classList.toggle('done', step3Done);
+  setStepDoneIcon(stepBtn1, step1Done);
+  setStepDoneIcon(stepBtn2, step2Done);
+  setStepDoneIcon(stepBtn3, step3Done);
+}
+[step1, step2, step3].forEach(d => d.addEventListener('toggle', refreshStepper));
+[[stepBtn1, step1], [stepBtn2, step2], [stepBtn3, step3]].forEach(([btn, details]) => {
+  btn.addEventListener('click', () => {
+    if (details.classList.contains('hidden')) return;
+    details.open = true;
+    details.scrollIntoView({behavior:'smooth', block:'start'});
+    refreshStepper();
+  });
+});
+
+function updateLiveStats(){
+  const wrap = document.getElementById('liveStats');
+  if (!contacts.length){ wrap.classList.add('hidden'); return; }
+  wrap.classList.remove('hidden');
+  const sent = contacts.filter(c => getStatus(c.phoneClean).sent).length;
+  const scheduled = contacts.filter(c => getStatus(c.phoneClean).scheduled).length;
+  const done = contacts.filter(c => getStatus(c.phoneClean).done).length;
+  const rewarded = contacts.filter(c => getStatus(c.phoneClean).rewardSent).length;
+  wrap.innerHTML = [
+    ['Enviados', sent + '/' + contacts.length],
+    ['Agendados', scheduled],
+    ['Entrevistas', done],
+    ['Comunicados', rewarded]
+  ].map(([label, val]) => '<div class="chip"><b>' + val + '</b>' + label + '</div>').join('');
+}
+
+/* ============================== file upload ============================== */
+dropZone.addEventListener('click', () => fileInput.click());
+dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('drag'); });
+dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag'));
+dropZone.addEventListener('drop', e => {
+  e.preventDefault();
+  dropZone.classList.remove('drag');
+  if (e.dataTransfer.files.length) handleFile(e.dataTransfer.files[0]);
+});
+fileInput.addEventListener('change', e => {
+  if (e.target.files.length) handleFile(e.target.files[0]);
+});
+changeFileBtn.addEventListener('click', () => {
+  fileInfo.classList.add('hidden');
+  dropZone.classList.remove('hidden');
+  columnPickers.classList.add('hidden');
+  calendarLinkWrap.classList.add('hidden');
+  document.getElementById('progressBanner').classList.add('hidden');
+  statusColsDetected = null;
+  reservedColumnNames = [];
+  fileInput.value = '';
+});
+
+function handleFile(file){
+  const isCsv = /\.csv$/i.test(file.name) || file.type === 'text/csv';
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    try{
+      let wb;
+      if (isCsv){
+        const text = new TextDecoder('utf-8').decode(new Uint8Array(e.target.result));
+        wb = XLSX.read(text, {type:'string'});
+      } else {
+        wb = XLSX.read(new Uint8Array(e.target.result), {type:'array'});
+      }
+      const firstSheet = wb.Sheets[wb.SheetNames[0]];
+      const json = XLSX.utils.sheet_to_json(firstSheet, {header:1, defval:''});
+      if (!json.length){ alert('Planilha vazia.'); return; }
+      headers = json[0].map(h => String(h).trim());
+      rawRows = json.slice(1).filter(r => r.some(c => String(c).trim() !== ''));
+
+      fileNameEl.textContent = file.name;
+      fileCountEl.textContent = rawRows.length + ' linhas encontradas';
+      dropZone.classList.add('hidden');
+      fileInfo.classList.remove('hidden');
+      columnPickers.classList.remove('hidden');
+      calendarLinkWrap.classList.remove('hidden');
+
+      detectStatusColumns();
+      populateColumnSelectors();
+      refreshStepper();
+    }catch(err){
+      console.error(err);
+      alert('Não consegui ler esse arquivo. Confira se é um .xlsx, .xls ou .csv válido.');
+    }
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+function detectStatusColumns(){
+  const find = (re) => headers.findIndex(h => re.test(h));
+  const cols = {
+    sent: find(/^convite$/i),
+    scheduled: find(/^agendado$/i),
+    meetLink: find(/^link_meet$/i),
+    reminderSent: find(/^lembrete$/i),
+    done: find(/^entrevista_realizada$/i),
+    rewardSent: find(/^recompensa$/i),
+    override: find(/^status_manual$/i)
+  };
+  const foundCount = Object.values(cols).filter(v => v >= 0).length;
+  const banner = document.getElementById('progressBanner');
+  const bannerText = document.getElementById('progressBannerText');
+
+  const msg1Idx = find(new RegExp('^' + MSG1_COL_NAME + '$', 'i'));
+  const msg2Idx = find(new RegExp('^' + MSG2_COL_NAME + '$', 'i'));
+  const msg3Idx = find(new RegExp('^' + MSG3_COL_NAME + '$', 'i'));
+  const calendarLinkIdx = find(new RegExp('^' + CALENDAR_LINK_COL_NAME + '$', 'i'));
+  const lastSavedIdx = find(new RegExp('^' + LAST_SAVED_COL_NAME + '$', 'i'));
+  let recoveredAnyMessage = false;
+  if (msg1Idx >= 0){
+    const found = rawRows.map(r => r[msg1Idx]).find(v => String(v || '').trim() !== '');
+    if (found){ messageBox.value = String(found); recoveredAnyMessage = true; }
+  }
+  if (msg2Idx >= 0){
+    const found = rawRows.map(r => r[msg2Idx]).find(v => String(v || '').trim() !== '');
+    if (found){ messageBox2.value = String(found); recoveredAnyMessage = true; }
+  }
+  if (msg3Idx >= 0){
+    const found = rawRows.map(r => r[msg3Idx]).find(v => String(v || '').trim() !== '');
+    if (found){ messageBox3.value = String(found); recoveredAnyMessage = true; }
+  }
+  if (calendarLinkIdx >= 0){
+    const found = rawRows.map(r => r[calendarLinkIdx]).find(v => String(v || '').trim() !== '');
+    if (found){ calendarLinkInput.value = String(found); recoveredAnyMessage = true; }
+  }
+  if (lastSavedIdx >= 0){
+    const found = rawRows.map(r => r[lastSavedIdx]).find(v => String(v || '').trim() !== '');
+    if (found){
+      const parsed = new Date(String(found));
+      if (!isNaN(parsed.getTime())){
+        updateLastSavedText(parsed);
+        window.storage.set(LAST_SAVED_KEY, parsed.toISOString()).catch(() => {});
+      }
+    }
+  }
+  updatePreview();
+  updatePreview2();
+  updatePreview3();
+
+  reservedColumnNames = [];
+  [cols.sent, cols.scheduled, cols.meetLink, cols.reminderSent, cols.done, cols.rewardSent, cols.override, msg1Idx, msg2Idx, msg3Idx, calendarLinkIdx, lastSavedIdx].forEach(idx => {
+    if (idx >= 0) reservedColumnNames.push(headers[idx]);
+  });
+
+  if (foundCount >= 2 || recoveredAnyMessage){
+    statusColsDetected = foundCount >= 2 ? cols : null;
+    const parts = [];
+    if (foundCount >= 2) parts.push('o progresso');
+    if (recoveredAnyMessage) parts.push('as mensagens');
+    bannerText.textContent = 'Recuperamos ' + parts.join(' e ') + ' de uma exportação anterior.';
+    banner.classList.remove('hidden');
+  } else {
+    statusColsDetected = null;
+    banner.classList.add('hidden');
+  }
+}
+
+function populateColumnSelectors(){
+  phoneColSel.innerHTML = '';
+  nameColSel.innerHTML = '<option value="">(nenhuma)</option>';
+  headers.forEach((h, i) => {
+    if (reservedColumnNames.includes(h)) return;
+    const opt1 = document.createElement('option');
+    opt1.value = i; opt1.textContent = h || ('Coluna ' + (i+1));
+    phoneColSel.appendChild(opt1);
+    const opt2 = document.createElement('option');
+    opt2.value = i; opt2.textContent = h || ('Coluna ' + (i+1));
+    nameColSel.appendChild(opt2);
+  });
+  const phoneGuessIdx = headers.findIndex(h => !reservedColumnNames.includes(h) && /telefone|celular|whats|phone|numero|número/i.test(h));
+  if (phoneGuessIdx >= 0) phoneColSel.value = phoneGuessIdx;
+  const nameGuessIdx = headers.findIndex(h => !reservedColumnNames.includes(h) && /nome|name/i.test(h));
+  if (nameGuessIdx >= 0) nameColSel.value = nameGuessIdx;
+  updateNameTokenButtonsVisibility();
+}
+
+/* @nome só faz sentido se houver uma coluna de nome selecionada na planilha */
+function updateNameTokenButtonsVisibility(){
+  const hasNameCol = nameColSel.value !== '';
+  [insertNameBtn, insertNameBtn2, insertNameBtn3].forEach(btn => btn.classList.toggle('hidden', !hasNameCol));
+}
+
+/* ============================== formatting toolbar ============================== */
+document.querySelectorAll('.tbtn[data-wrap]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const wrap = btn.dataset.wrap;
+    const target = document.getElementById(btn.dataset.target);
+    const start = target.selectionStart, end = target.selectionEnd;
+    const val = target.value;
+    const selected = val.slice(start, end) || (wrap === '```' ? 'código' : 'texto');
+    target.value = val.slice(0, start) + wrap + selected + wrap + val.slice(end);
+    target.focus();
+    target.selectionStart = start + wrap.length;
+    target.selectionEnd = start + wrap.length + selected.length;
+    if (target.id === 'messageBox2') updatePreview2();
+    else if (target.id === 'messageBox3') updatePreview3();
+    else updatePreview();
+  });
+});
+
+insertNameBtn.addEventListener('click', () => {
+  const start = messageBox.selectionStart, end = messageBox.selectionEnd;
+  const val = messageBox.value;
+  messageBox.value = val.slice(0, start) + '@nome' + val.slice(end);
+  messageBox.focus();
+  messageBox.selectionStart = start; messageBox.selectionEnd = start + 5;
+  updatePreview();
+});
+insertCalendarBtn.addEventListener('click', () => {
+  const start = messageBox.selectionStart, end = messageBox.selectionEnd;
+  const val = messageBox.value;
+  messageBox.value = val.slice(0, start) + '#link-calendar' + val.slice(end);
+  messageBox.focus();
+  messageBox.selectionStart = start; messageBox.selectionEnd = start + 14;
+  updatePreview();
+});
+insertNameBtn2.addEventListener('click', () => {
+  const start = messageBox2.selectionStart, end = messageBox2.selectionEnd;
+  const val = messageBox2.value;
+  messageBox2.value = val.slice(0, start) + '@nome' + val.slice(end);
+  messageBox2.focus();
+  messageBox2.selectionStart = start; messageBox2.selectionEnd = start + 5;
+  updatePreview2();
+});
+insertLinkBtn2.addEventListener('click', () => {
+  const start = messageBox2.selectionStart, end = messageBox2.selectionEnd;
+  const val = messageBox2.value;
+  messageBox2.value = val.slice(0, start) + '#link-meet' + val.slice(end);
+  messageBox2.focus();
+  messageBox2.selectionStart = start; messageBox2.selectionEnd = start + 10;
+  updatePreview2();
+});
+insertNameBtn3.addEventListener('click', () => {
+  const start = messageBox3.selectionStart, end = messageBox3.selectionEnd;
+  const val = messageBox3.value;
+  messageBox3.value = val.slice(0, start) + '@nome' + val.slice(end);
+  messageBox3.focus();
+  messageBox3.selectionStart = start; messageBox3.selectionEnd = start + 5;
+  updatePreview3();
+});
+insertDayBtn3.addEventListener('click', () => {
+  const start = messageBox3.selectionStart, end = messageBox3.selectionEnd;
+  const val = messageBox3.value;
+  messageBox3.value = val.slice(0, start) + '#dia-pix' + val.slice(end);
+  messageBox3.focus();
+  messageBox3.selectionStart = start; messageBox3.selectionEnd = start + 8;
+  updatePreview3();
+});
+
+function checkNameWarning2(){
+  const usesToken = NAME_TOKEN.test(messageBox2.value);
+  NAME_TOKEN.lastIndex = 0;
+  const show = usesToken && nameColSel.value === '';
+  nameWarning2.textContent = show ? 'Selecione a coluna de nome para o @nome funcionar.' : '';
+  nameWarning2.classList.toggle('hidden', !show);
+}
+function checkLinkTokenStatus(){
+  const usesToken = LINK_MEET_TOKEN.test(messageBox2.value);
+  LINK_MEET_TOKEN.lastIndex = 0;
+  const hasText = messageBox2.value.trim() !== '';
+  linkTokenStatus.className = 'microcopy ' + (usesToken ? 'ok' : (hasText ? 'warn' : ''));
+  linkTokenStatus.textContent = hasText
+    ? (usesToken ? '✓ Link do Meet marcado' : '⚠ Nenhum link do Meet marcado (use #link-meet)')
+    : '';
+  linkTokenStatus.classList.toggle('hidden', !hasText);
+}
+function checkNameWarning3(){
+  const usesToken = NAME_TOKEN.test(messageBox3.value);
+  NAME_TOKEN.lastIndex = 0;
+  const show = usesToken && nameColSel.value === '';
+  nameWarning3.textContent = show ? 'Selecione a coluna de nome para o @nome funcionar.' : '';
+  nameWarning3.classList.toggle('hidden', !show);
+}
+
+function updatePreview(){
+  let text = messageBox.value;
+  const nameIdxPreview = nameColSel.value === '' ? -1 : parseInt(nameColSel.value, 10);
+  let sampleName = 'Fulano';
+  if (nameIdxPreview >= 0 && rawRows.length && rawRows[0][nameIdxPreview]){
+    sampleName = firstNameCapitalized(rawRows[0][nameIdxPreview]) || sampleName;
+  }
+  text = nameIdxPreview >= 0 ? text.replace(NAME_TOKEN, sampleName) : text.replace(NAME_TOKEN, '');
+  text = text.replace(LINK_CALENDAR_TOKEN, calendarLinkInput.value.trim() || 'https://calendar.app.google/...');
+  document.getElementById('preview').innerHTML = renderWhatsAppPreview(text);
+}
+function updatePreview2(){
+  let text = messageBox2.value;
+  const nameIdxPreview = nameColSel.value === '' ? -1 : parseInt(nameColSel.value, 10);
+  let sampleName = 'Fulano';
+  if (nameIdxPreview >= 0 && rawRows.length && rawRows[0][nameIdxPreview]){
+    sampleName = firstNameCapitalized(rawRows[0][nameIdxPreview]) || sampleName;
+  }
+  text = nameIdxPreview >= 0 ? text.replace(NAME_TOKEN, sampleName) : text.replace(NAME_TOKEN, '');
+  text = text.replace(LINK_MEET_TOKEN, 'https://meet.google.com/abc-defg-hij');
+  document.getElementById('preview2').innerHTML = renderWhatsAppPreview(text);
+  checkNameWarning2();
+  checkLinkTokenStatus();
+}
+function updatePreview3(){
+  let text = messageBox3.value;
+  const nameIdxPreview = nameColSel.value === '' ? -1 : parseInt(nameColSel.value, 10);
+  let sampleName = 'Fulano';
+  if (nameIdxPreview >= 0 && rawRows.length && rawRows[0][nameIdxPreview]){
+    sampleName = firstNameCapitalized(rawRows[0][nameIdxPreview]) || sampleName;
+  }
+  text = nameIdxPreview >= 0 ? text.replace(NAME_TOKEN, sampleName) : text.replace(NAME_TOKEN, '');
+  text = text.replace(DAY_TOKEN, nextPaymentDay(new Date()));
+  document.getElementById('preview3').innerHTML = renderWhatsAppPreview(text);
+  checkNameWarning3();
+}
+messageBox.addEventListener('input', updatePreview);
+messageBox2.addEventListener('input', updatePreview2);
+messageBox3.addEventListener('input', updatePreview3);
+nameColSel.addEventListener('change', () => { updateNameTokenButtonsVisibility(); updatePreview(); updatePreview2(); updatePreview3(); });
+
+/* ============================== preset de mensagens ============================== */
+const PRESET_INVITE = 'Olá @nome! Tudo bem? 😊\n\nMeu nome é Hyago e faço parte do time de Pesquisa da *NG.CASH*.\n\nEstamos conversando com alguns usuários para entender melhor a experiência com nossos produtos, e queria te convidar para um bate-papo rápido de 30 minutos.\n\n*Como agradecimento pela participação, oferecemos uma recompensa de R$80 no Pix.* 🎁\n\nSe topar participar, é só agendar o melhor horário pra você neste link:\n#link-calendar\n\nSeu feedback é super importante pra ajudar a gente a melhorar cada vez mais a experiência no app.\n\nObrigado!';
+const PRESET_REMINDER = 'Olá @nome, tudo bem?\n\nPassando pra te lembrar do nosso bate-papo daqui a *5 minutos.*\n\nEsse é o link da nossa conversa no Google Meet:\n#link-meet\n\nTe espero lá! 😊';
+const PRESET_REWARD = 'Já encaminhei para o time financeiro, o Pix deve cair pra você no próximo dia #dia-pix.\n\nMuito obrigado pela participação!';
+
+presetBtn.addEventListener('click', (e) => {
+  e.preventDefault();
+  e.stopPropagation();
+  messageBox.value = PRESET_INVITE;
+  messageBox2.value = PRESET_REMINDER;
+  messageBox3.value = PRESET_REWARD;
+  updatePreview();
+  updatePreview2();
+  updatePreview3();
+  refreshStepper();
+});
+
+/* ============================== generate list ============================== */
+generateBtn.addEventListener('click', async () => {
+  const phoneIdx = parseInt(phoneColSel.value, 10);
+  const nameIdx = nameColSel.value === '' ? -1 : parseInt(nameColSel.value, 10);
+  const message = messageBox.value.trim().normalize('NFC');
+  if (!message){ alert('Escreva a mensagem de convite antes de gerar a lista.'); return; }
+
+  reminderTemplate = messageBox2.value.trim().normalize('NFC');
+  rewardTemplate = messageBox3.value.trim().normalize('NFC');
+  calendarLink = calendarLinkInput.value.trim();
+  activeNameIdx = nameIdx;
+
+  contacts = rawRows.map((row, i) => {
+    const rawPhone = row[phoneIdx] !== undefined ? row[phoneIdx] : '';
+    const rawName = nameIdx >= 0 && row[nameIdx] !== undefined ? String(row[nameIdx]).trim() : '';
+    const {clean, valid} = cleanPhone(rawPhone);
+    const firstName = firstNameCapitalized(rawName);
+    const personalizedMessage = (nameIdx >= 0
+      ? message.replace(NAME_TOKEN, firstName)
+      : message.replace(NAME_TOKEN, '')
+    ).replace(LINK_CALENDAR_TOKEN, calendarLink || '(link do calendário não preenchido)');
+    const waLink = clean ? buildWaLink(clean, personalizedMessage) : '';
+
+    let csvStatus = null;
+    if (statusColsDetected){
+      const c = statusColsDetected;
+      csvStatus = {
+        sent: c.sent >= 0 ? parseBool(row[c.sent], 'enviado') : false,
+        scheduled: c.scheduled >= 0 ? parseBool(row[c.scheduled], 'sim') : false,
+        meetLink: c.meetLink >= 0 && row[c.meetLink] !== undefined ? String(row[c.meetLink]).trim() : '',
+        reminderSent: c.reminderSent >= 0 ? parseBool(row[c.reminderSent], 'enviado') : false,
+        done: c.done >= 0 ? parseBool(row[c.done], 'sim') : false,
+        rewardSent: c.rewardSent >= 0 ? parseBool(row[c.rewardSent], 'comunicado') : false,
+        override: c.override >= 0 && ['concluido','sem_exito'].includes(String(row[c.override] || '').trim().toLowerCase())
+          ? String(row[c.override]).trim().toLowerCase() : null
+      };
+    }
+
+    return {
+      id: 'c' + i, name: rawName ? capitalizeFullName(rawName) : '(sem nome)', rawName, firstName,
+      phoneRaw: String(rawPhone), phoneClean: clean, valid, waLink, csvStatus
+    };
+  });
+
+  await loadStatusMap();
+  let recoveredCount = 0;
+  contacts.forEach(c => {
+    if (c.csvStatus && !statusMap[c.phoneClean]){
+      statusMap[c.phoneClean] = Object.assign(
+        { sent:false, scheduled:false, meetLink:'', reminderSent:false, done:false, rewardSent:false, override:null },
+        c.csvStatus
+      );
+      recoveredCount++;
+    }
+  });
+  if (recoveredCount > 0) await saveStatusMap();
+
+  document.getElementById('listCount').textContent = contacts.length + ' contato' + (contacts.length === 1 ? '' : 's');
+  step3.classList.remove('hidden');
+  step1.open = false;
+  step2.open = false;
+  step3.open = true;
+  refreshStepper();
+  updateLiveStats();
+  refreshFilterSnapshot();
+  renderTable();
+  step3.scrollIntoView({behavior:'smooth', block:'start'});
+});
+
+function buildReminderLink(contact){
+  if (!contact.valid || !reminderTemplate) return '';
+  const status = getStatus(contact.phoneClean);
+  let msg = activeNameIdx >= 0
+    ? reminderTemplate.replace(NAME_TOKEN, contact.firstName || '')
+    : reminderTemplate.replace(NAME_TOKEN, '');
+  msg = msg.replace(LINK_MEET_TOKEN, status.meetLink || '(link não preenchido)');
+  return buildWaLink(contact.phoneClean, msg);
+}
+
+function buildRewardLink(contact){
+  if (!contact.valid || !rewardTemplate) return '';
+  let msg = activeNameIdx >= 0
+    ? rewardTemplate.replace(NAME_TOKEN, contact.firstName || '')
+    : rewardTemplate.replace(NAME_TOKEN, '');
+  msg = msg.replace(DAY_TOKEN, nextPaymentDay(new Date()));
+  return buildWaLink(contact.phoneClean, msg);
+}
+
+/* ============================== persistence ============================== */
+async function loadStatusMap(){
+  try{
+    const res = await window.storage.get(STORAGE_KEY);
+    if (res && res.value){ statusMap = JSON.parse(res.value); return; }
+  }catch(e){ /* fall through */ }
+  try{
+    const oldRes = await window.storage.get(STORAGE_KEY_V1);
+    const oldMap = oldRes && oldRes.value ? JSON.parse(oldRes.value) : {};
+    statusMap = {};
+    Object.keys(oldMap).forEach(phone => {
+      statusMap[phone] = { sent: !!oldMap[phone], scheduled:false, meetLink:'', reminderSent:false, done:false, rewardSent:false, override:null };
+    });
+    if (Object.keys(statusMap).length) await saveStatusMap();
+  }catch(e){ statusMap = {}; }
+}
+async function saveStatusMap(){
+  const payload = JSON.stringify(statusMap);
+  try{
+    await window.storage.set(STORAGE_KEY, payload);
+  }catch(e){
+    console.error('Não consegui salvar o progresso, tentando novamente...', e);
+    await new Promise(r => setTimeout(r, 800));
+    try{ await window.storage.set(STORAGE_KEY, payload); }
+    catch(e2){ console.error('Não consegui salvar o progresso após nova tentativa', e2); }
+  }
+}
+
+/* ============================== table render ============================== */
+function mutedCell(){
+  const span = document.createElement('span');
+  span.className = 'cell-muted';
+  span.textContent = '—';
+  return span;
+}
+function cellTag(label, cls, onUndo){
+  const tag = document.createElement('button');
+  tag.type = 'button';
+  tag.className = 'cell-tag ' + cls;
+  tag.textContent = label;
+  tag.title = 'Clique para desfazer';
+  tag.addEventListener('click', onUndo);
+  return tag;
+}
+function cellActionBtn(label, enabled, href, title, onClick){
+  const btn = document.createElement('a');
+  btn.className = 'btn small' + (!enabled ? ' disabled' : '');
+  btn.textContent = label;
+  btn.title = title;
+  if (enabled){ btn.href = href; btn.target = '_blank'; btn.rel = 'noopener'; }
+  btn.addEventListener('click', () => { if (enabled) onClick(); });
+  return btn;
+}
+
+function statusMenuOption(label, cls, onClick){
+  const btn = document.createElement('button');
+  btn.type = 'button';
+  if (cls) btn.className = cls;
+  btn.textContent = label;
+  btn.addEventListener('click', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    onClick();
+  });
+  return btn;
+}
+function buildStatusMenu(c, status, overall){
+  const wrap = document.createElement('details');
+  wrap.className = 'status-pill-wrap';
+  const summary = document.createElement('summary');
+  const pill = document.createElement('div');
+  pill.className = 'status-pill ' + overall.cls;
+  pill.textContent = overall.label;
+  summary.appendChild(pill);
+  wrap.appendChild(summary);
+
+  const menu = document.createElement('div');
+  menu.className = 'status-menu';
+  menu.appendChild(statusMenuOption('Marcar como Concluído', 'opt-concluido', () => {
+    setStatus(c.phoneClean, {override:'concluido'}); renderTable();
+  }));
+  menu.appendChild(statusMenuOption('Marcar como Sem êxito', 'opt-sem-exito', () => {
+    setStatus(c.phoneClean, {override:'sem_exito'}); renderTable();
+  }));
+  if (status.override){
+    menu.appendChild(statusMenuOption('Voltar ao automático', 'opt-reset', () => {
+      setStatus(c.phoneClean, {override:null}); renderTable();
+    }));
+  }
+  wrap.appendChild(menu);
+  return wrap;
+}
+
+function renderTable(){
+  const q = searchBox.value.trim().toLowerCase();
+  let rows = contacts.filter(c => {
+    if (filterSnapshot && !filterSnapshot.has(c.phoneClean)) return false;
+    if (q && !(c.name.toLowerCase().includes(q) || c.phoneRaw.toLowerCase().includes(q))) return false;
+    return true;
+  });
+
+  tbody.innerHTML = '';
+  emptyState.classList.toggle('hidden', rows.length > 0);
+
+  rows.forEach(c => {
+    const status = getStatus(c.phoneClean);
+    const overall = getOverallStatus(status);
+    const tr = document.createElement('tr');
+    if (status.done) tr.classList.add('row-done');
+
+    /* ---- status geral (primeira coluna); clicável para marcar manualmente Concluído/Sem êxito ---- */
+    const tdStatus = document.createElement('td');
+    tdStatus.className = 'col-status';
+    tdStatus.appendChild(buildStatusMenu(c, status, overall));
+
+    /* ---- contato ---- */
+    const tdContact = document.createElement('td');
+    tdContact.className = 'col-contact';
+    const nameDiv = document.createElement('div');
+    nameDiv.className = 'contact-name'; nameDiv.textContent = c.name;
+    const phoneDiv = document.createElement('div');
+    phoneDiv.className = 'contact-phone'; phoneDiv.textContent = formatPhoneDisplay(c.phoneClean, c.phoneRaw);
+    tdContact.appendChild(nameDiv); tdContact.appendChild(phoneDiv);
+    if (!c.valid){
+      const inv = document.createElement('div');
+      inv.className = 'badge-invalid'; inv.textContent = 'Conferir número';
+      tdContact.appendChild(inv);
+    }
+
+    /* ---- convite: botão "Convidar" -> tag "Convidado" ---- */
+    const tdInvite = document.createElement('td');
+    tdInvite.className = 'col-switch';
+    if (!status.sent){
+      tdInvite.appendChild(cellActionBtn('Convidar', !!c.waLink, c.waLink,
+        c.waLink ? 'Abrir no WhatsApp' : 'Conferir número',
+        () => { setStatus(c.phoneClean, {sent:true}); renderTable(); }));
+    } else {
+      tdInvite.appendChild(cellTag('Enviado', 'tag-enviado', () => { setStatus(c.phoneClean, {sent:false}); renderTable(); }));
+    }
+
+    /* ---- agendado: só aparece depois do convite ---- */
+    const tdSched = document.createElement('td');
+    tdSched.className = 'col-switch';
+    if (status.sent){
+      tdSched.appendChild(makeSwitch(status.scheduled, false, (val) => { setStatus(c.phoneClean, {scheduled:val}); renderTable(); }));
+    } else {
+      tdSched.appendChild(mutedCell());
+    }
+
+    /* ---- link do meet: só aparece depois de agendado ---- */
+    const tdMeet = document.createElement('td');
+    tdMeet.className = 'col-link';
+    if (status.scheduled){
+      const meetInput = document.createElement('input');
+      meetInput.type = 'text'; meetInput.className = 'link-input';
+      meetInput.placeholder = 'https://';
+      meetInput.value = status.meetLink || '';
+      meetInput.addEventListener('change', () => { setStatus(c.phoneClean, {meetLink: normalizeMeetLink(meetInput.value)}); renderTable(); });
+      tdMeet.appendChild(meetInput);
+    } else {
+      tdMeet.appendChild(mutedCell());
+    }
+
+    /* ---- lembrete: botão "Lembrar" -> tag "Lembrado" ---- */
+    const tdReminder = document.createElement('td');
+    tdReminder.className = 'col-switch';
+    if (status.scheduled){
+      if (!status.reminderSent){
+        const reminderNeedsLink = LINK_MEET_TOKEN.test(reminderTemplate); LINK_MEET_TOKEN.lastIndex = 0;
+        const canRemind = c.valid && !!reminderTemplate && (!reminderNeedsLink || status.meetLink);
+        tdReminder.appendChild(cellActionBtn('Lembrar', canRemind, canRemind ? buildReminderLink(c) : '',
+          canRemind ? 'Abrir no WhatsApp' : 'Escreva a mensagem de confirmação e preencha o link do Meet',
+          () => { setStatus(c.phoneClean, {reminderSent:true}); renderTable(); }));
+      } else {
+        tdReminder.appendChild(cellTag('Enviado', 'tag-enviado', () => { setStatus(c.phoneClean, {reminderSent:false}); renderTable(); }));
+      }
+    } else {
+      tdReminder.appendChild(mutedCell());
+    }
+
+    /* ---- entrevista: só aparece depois do lembrete ---- */
+    const tdDone = document.createElement('td');
+    tdDone.className = 'col-switch';
+    if (status.reminderSent){
+      tdDone.appendChild(makeSwitch(status.done, false, (val) => { setStatus(c.phoneClean, {done:val}); renderTable(); }));
+    } else {
+      tdDone.appendChild(mutedCell());
+    }
+
+    /* ---- recompensa: botão "Comunicar" -> tag "Comunicado" ---- */
+    const tdReward = document.createElement('td');
+    tdReward.className = 'col-switch';
+    if (status.done){
+      if (!status.rewardSent){
+        const canReward = c.valid && !!rewardTemplate;
+        tdReward.appendChild(cellActionBtn('Comunicar', canReward, canReward ? buildRewardLink(c) : '',
+          canReward ? 'Abrir no WhatsApp' : 'Escreva a mensagem de recompensa e preencha o valor',
+          () => { setStatus(c.phoneClean, {rewardSent:true}); renderTable(); }));
+      } else {
+        tdReward.appendChild(cellTag('Enviado', 'tag-enviado', () => { setStatus(c.phoneClean, {rewardSent:false}); renderTable(); }));
+      }
+    } else {
+      tdReward.appendChild(mutedCell());
+    }
+
+    tr.appendChild(tdStatus); tr.appendChild(tdContact); tr.appendChild(tdInvite); tr.appendChild(tdSched);
+    tr.appendChild(tdMeet); tr.appendChild(tdReminder); tr.appendChild(tdDone); tr.appendChild(tdReward);
+    tbody.appendChild(tr);
+  });
+}
+
+document.getElementById('filterTabs').addEventListener('click', (e) => {
+  const btn = e.target.closest('button[data-filter]');
+  if (!btn) return;
+  document.querySelectorAll('#filterTabs button').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  currentFilter = btn.dataset.filter;
+  refreshFilterSnapshot();
+  renderTable();
+});
+searchBox.addEventListener('input', renderTable);
+
+function shuffleArray(arr){
+  for (let i = arr.length - 1; i > 0; i--){
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+shuffleBtn.addEventListener('click', () => {
+  shuffleArray(contacts);
+  renderTable();
+});
+
+exportBtn.addEventListener('click', async () => {
+  const now = new Date();
+  const lines = [['nome','telefone','convite','agendado','link_meet','lembrete','entrevista_realizada','recompensa','status_manual', MSG1_COL_NAME, MSG2_COL_NAME, MSG3_COL_NAME, CALENDAR_LINK_COL_NAME, LAST_SAVED_COL_NAME]];
+  contacts.forEach((c, i) => {
+    const s = getStatus(c.phoneClean);
+    lines.push([
+      c.name, c.phoneRaw,
+      s.sent ? 'enviado' : 'pendente',
+      s.scheduled ? 'sim' : 'não',
+      s.meetLink || '',
+      s.reminderSent ? 'enviado' : 'pendente',
+      s.done ? 'sim' : 'não',
+      s.rewardSent ? 'comunicado' : 'pendente',
+      s.override || '',
+      i === 0 ? messageBox.value : '',
+      i === 0 ? messageBox2.value : '',
+      i === 0 ? messageBox3.value : '',
+      i === 0 ? calendarLinkInput.value : '',
+      i === 0 ? now.toISOString() : ''
+    ]);
+  });
+  const csv = lines.map(row => row.map(cell => '"' + String(cell).replace(/"/g,'""') + '"').join(',')).join('\n');
+  const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = 'status-disparo-whatsapp.csv';
+  a.click();
+  URL.revokeObjectURL(url);
+
+  updateLastSavedText(now);
+  try{ await window.storage.set(LAST_SAVED_KEY, now.toISOString()); }catch(e){ /* sem problema, só não persiste entre sessões */ }
+});
+
+resetBtn.addEventListener('click', async () => {
+  if (!confirm('Zerar todo o progresso salvo (convite, agendamento, lembrete, entrevista e recompensa)?')) return;
+  if (!confirm('Essa ação não pode ser desfeita. Confirma mesmo assim?')) return;
+  statusMap = {};
+  await saveStatusMap();
+  updateLiveStats();
+  refreshFilterSnapshot();
+  renderTable();
+});
+
+refreshStepper();
+updateNameTokenButtonsVisibility();
+updatePreview();
+updatePreview2();
+updatePreview3();
+document.addEventListener('click', (e) => {
+  document.querySelectorAll('details.status-pill-wrap[open]').forEach(d => {
+    if (!d.contains(e.target)) d.removeAttribute('open');
+  });
+});
+</script>
+</body>
+</html>
