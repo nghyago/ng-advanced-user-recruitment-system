@@ -873,6 +873,7 @@ function handleFile(file){
   const isCsv = /\.csv$/i.test(file.name) || file.type === 'text/csv';
   const reader = new FileReader();
   reader.onload = (e) => {
+    let json;
     try{
       let wb;
       if (isCsv){
@@ -882,24 +883,30 @@ function handleFile(file){
         wb = XLSX.read(new Uint8Array(e.target.result), {type:'array'});
       }
       const firstSheet = wb.Sheets[wb.SheetNames[0]];
-      const json = XLSX.utils.sheet_to_json(firstSheet, {header:1, defval:''});
-      if (!json.length){ alert('Planilha vazia.'); return; }
-      headers = json[0].map(h => String(h).trim());
-      rawRows = json.slice(1).filter(r => r.some(c => String(c).trim() !== ''));
+      json = XLSX.utils.sheet_to_json(firstSheet, {header:1, defval:''});
+    }catch(err){
+      console.error(err);
+      alert('Não consegui ler esse arquivo. Confira se é um .xlsx, .xls ou .csv válido.');
+      return;
+    }
+    if (!json.length){ alert('Planilha vazia.'); return; }
+    headers = json[0].map(h => String(h).trim());
+    rawRows = json.slice(1).filter(r => r.some(c => String(c).trim() !== ''));
 
-      fileNameEl.textContent = file.name;
-      fileCountEl.textContent = rawRows.length + ' linhas encontradas';
-      dropZone.classList.add('hidden');
-      fileInfo.classList.remove('hidden');
-      columnPickers.classList.remove('hidden');
-      calendarLinkWrap.classList.remove('hidden');
+    fileNameEl.textContent = file.name;
+    fileCountEl.textContent = rawRows.length + ' linhas encontradas';
+    dropZone.classList.add('hidden');
+    fileInfo.classList.remove('hidden');
+    columnPickers.classList.remove('hidden');
+    calendarLinkWrap.classList.remove('hidden');
 
+    try{
       detectStatusColumns();
       populateColumnSelectors();
       refreshStepper();
     }catch(err){
       console.error(err);
-      alert('Não consegui ler esse arquivo. Confira se é um .xlsx, .xls ou .csv válido.');
+      alert('A planilha foi lida normalmente, mas houve um erro ao recuperar o progresso salvo. Você pode continuar usando o arquivo; confira o console do navegador para detalhes.');
     }
   };
   reader.readAsArrayBuffer(file);
@@ -948,7 +955,7 @@ function detectStatusColumns(){
       const parsed = new Date(String(found));
       if (!isNaN(parsed.getTime())){
         updateLastSavedText(parsed);
-        window.storage.set(LAST_SAVED_KEY, parsed.toISOString()).catch(() => {});
+        try{ window.storage.set(LAST_SAVED_KEY, parsed.toISOString()).catch(() => {}); }catch(e){ /* sem storage disponível agora, sem problema */ }
       }
     }
   }
