@@ -169,6 +169,7 @@
   .btn.ghost:hover{ border-color: var(--border-strong); background: var(--surface-2); }
   .btn.small{ padding:5px 11px; font-size:12px; border-radius:6px; }
   .btn.disabled, a.btn.disabled{ background: var(--disabled-bg); color: var(--disabled-text); cursor:not-allowed; pointer-events:none; }
+  .btn:disabled{ background: var(--disabled-bg); color: var(--disabled-text); cursor:not-allowed; }
   a.btn{ display:inline-flex; align-items:center; gap:5px; text-decoration:none; }
 
   /* dropzone */
@@ -232,10 +233,18 @@
     margin-bottom:14px;
   }
   .search-wrap{ position:relative; width:230px; }
-  .search-wrap svg{
+  .search-wrap > svg{
     position:absolute; left:10px; top:50%; transform:translateY(-50%); color: var(--text-3); pointer-events:none;
   }
-  .search-wrap input{ padding-left:30px; }
+  .search-wrap input{ padding-left:30px; padding-right:26px; }
+  .search-clear{
+    position:absolute; right:6px; top:50%; transform:translateY(-50%);
+    width:16px; height:16px;
+    display:flex; align-items:center; justify-content:center;
+    color: var(--text-3); opacity:0.45; cursor:pointer; transition: opacity .15s, color .15s;
+  }
+  .search-clear svg{ display:block; pointer-events:none; }
+  .search-clear:hover{ opacity:0.85; color: var(--text-2); }
 
   .segmented{
     display:inline-flex; flex-wrap:wrap; background: var(--surface-2); border:1px solid var(--border);
@@ -479,7 +488,7 @@
           <button type="button" class="tbtn" id="insertNameBtn3" title="Inserir primeiro nome do contato">@nome</button>
           <button type="button" class="tbtn link" id="insertDayBtn3" title="Inserir o próximo dia de pagamento (calculado automaticamente)">#dia-pix</button>
         </div>
-        <textarea id="messageBox3">Já encaminhei para o time financeiro, o Pix deve cair pra você no próximo dia #dia-pix. Muito obrigado pela participação!</textarea>
+        <textarea id="messageBox3" placeholder="Já encaminhei para o time financeiro, o Pix deve cair pra você no próximo dia #dia-pix. Muito obrigado pela participação!"></textarea>
         <div class="microcopy warn" id="nameWarning3"></div>
         <details class="preview-toggle">
           <summary><svg class="chevron" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>Pré-visualizar</summary>
@@ -487,7 +496,7 @@
         </details>
       </div>
 
-      <button class="btn" id="generateBtn" style="margin-top:6px;">Gerar lista de envio</button>
+      <button class="btn" id="generateBtn" style="margin-top:6px;">Iniciar recrutamento</button>
     </div>
   </details>
 
@@ -501,6 +510,9 @@
         <div class="search-wrap">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
           <input type="text" id="searchBox" placeholder="Buscar contato...">
+          <span class="search-clear hidden" id="searchClearBtn" role="button" tabindex="0" title="Limpar busca" aria-label="Limpar busca">
+            <svg width="16" height="16" viewBox="0 0 256 256" fill="currentColor"><path d="M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm37.66,130.34a8,8,0,0,1-11.32,11.32L128,139.31l-26.34,26.35a8,8,0,0,1-11.32-11.32L116.69,128,90.34,101.66a8,8,0,0,1,11.32-11.32L128,116.69l26.34-26.35a8,8,0,0,1,11.32,11.32L139.31,128Z"></path></svg>
+          </span>
         </div>
         <div class="segmented" id="filterTabs">
           <button class="active" data-filter="all">Todos</button>
@@ -594,6 +606,7 @@ const messageBox3 = document.getElementById('messageBox3');
 const generateBtn = document.getElementById('generateBtn');
 const tbody = document.getElementById('tbody');
 const searchBox = document.getElementById('searchBox');
+const searchClearBtn = document.getElementById('searchClearBtn');
 const emptyState = document.getElementById('emptyState');
 const shuffleBtn = document.getElementById('shuffleBtn');
 const lastSavedText = document.getElementById('lastSavedText');
@@ -867,6 +880,7 @@ changeFileBtn.addEventListener('click', () => {
   statusColsDetected = null;
   reservedColumnNames = [];
   fileInput.value = '';
+  updateGenerateBtnLabel();
 });
 
 function handleFile(file){
@@ -904,9 +918,11 @@ function handleFile(file){
       detectStatusColumns();
       populateColumnSelectors();
       refreshStepper();
+      updateGenerateBtnEnabled();
     }catch(err){
       console.error(err);
       alert('A planilha foi lida normalmente, mas houve um erro ao recuperar o progresso salvo. Você pode continuar usando o arquivo; confira o console do navegador para detalhes.');
+      updateGenerateBtnEnabled();
     }
   };
   reader.readAsArrayBuffer(file);
@@ -979,6 +995,19 @@ function detectStatusColumns(){
     statusColsDetected = null;
     banner.classList.add('hidden');
   }
+  updateGenerateBtnLabel();
+}
+
+function updateGenerateBtnLabel(){
+  generateBtn.textContent = statusColsDetected ? 'Continuar recrutamento' : 'Iniciar recrutamento';
+}
+
+/* requisitos mínimos: planilha enviada, coluna de telefone escolhida e mensagem de convite escrita */
+function updateGenerateBtnEnabled(){
+  const hasFile = rawRows.length > 0;
+  const hasPhoneCol = phoneColSel.value !== '';
+  const hasMessage = messageBox.value.trim() !== '';
+  generateBtn.disabled = !(hasFile && hasPhoneCol && hasMessage);
 }
 
 function populateColumnSelectors(){
@@ -1134,10 +1163,11 @@ function updatePreview3(){
   document.getElementById('preview3').innerHTML = renderWhatsAppPreview(text);
   checkNameWarning3();
 }
-messageBox.addEventListener('input', updatePreview);
+messageBox.addEventListener('input', () => { updatePreview(); updateGenerateBtnEnabled(); });
 messageBox2.addEventListener('input', updatePreview2);
 messageBox3.addEventListener('input', updatePreview3);
 nameColSel.addEventListener('change', () => { updateNameTokenButtonsVisibility(); updatePreview(); updatePreview2(); updatePreview3(); });
+phoneColSel.addEventListener('change', updateGenerateBtnEnabled);
 
 /* ============================== preset de mensagens ============================== */
 const PRESET_INVITE = 'Olá @nome! Tudo bem? 😊\n\nMeu nome é Hyago e faço parte do time de Pesquisa da *NG.CASH*.\n\nEstamos conversando com alguns usuários para entender melhor a experiência com nossos produtos, e queria te convidar para um bate-papo rápido de 30 minutos.\n\n*Como agradecimento pela participação, oferecemos uma recompensa de R$80 no Pix.* 🎁\n\nSe topar participar, é só agendar o melhor horário pra você neste link:\n#link-calendar\n\nSeu feedback é super importante pra ajudar a gente a melhorar cada vez mais a experiência no app.\n\nObrigado!';
@@ -1154,6 +1184,7 @@ presetBtn.addEventListener('click', (e) => {
   updatePreview2();
   updatePreview3();
   refreshStepper();
+  updateGenerateBtnEnabled();
 });
 
 /* ============================== generate list ============================== */
@@ -1464,7 +1495,19 @@ document.getElementById('filterTabs').addEventListener('click', (e) => {
   refreshFilterSnapshot();
   renderTable();
 });
-searchBox.addEventListener('input', renderTable);
+function updateSearchClearVisibility(){
+  searchClearBtn.classList.toggle('hidden', searchBox.value === '');
+}
+searchBox.addEventListener('input', () => { renderTable(); updateSearchClearVisibility(); });
+searchClearBtn.addEventListener('click', () => {
+  searchBox.value = '';
+  updateSearchClearVisibility();
+  renderTable();
+  searchBox.focus();
+});
+searchClearBtn.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter' || e.key === ' '){ e.preventDefault(); searchClearBtn.click(); }
+});
 
 function shuffleArray(arr){
   for (let i = arr.length - 1; i > 0; i--){
@@ -1478,37 +1521,56 @@ shuffleBtn.addEventListener('click', () => {
   renderTable();
 });
 
-exportBtn.addEventListener('click', async () => {
-  const now = new Date();
-  const lines = [['nome','telefone','convite','agendado','link_meet','lembrete','entrevista_realizada','recompensa','status_manual', MSG1_COL_NAME, MSG2_COL_NAME, MSG3_COL_NAME, CALENDAR_LINK_COL_NAME, LAST_SAVED_COL_NAME]];
-  contacts.forEach((c, i) => {
-    const s = getStatus(c.phoneClean);
-    lines.push([
-      c.name, c.phoneRaw,
-      s.sent ? 'enviado' : 'pendente',
-      s.scheduled ? 'sim' : 'não',
-      s.meetLink || '',
-      s.reminderSent ? 'enviado' : 'pendente',
-      s.done ? 'sim' : 'não',
-      s.rewardSent ? 'comunicado' : 'pendente',
-      s.override || '',
-      i === 0 ? messageBox.value : '',
-      i === 0 ? messageBox2.value : '',
-      i === 0 ? messageBox3.value : '',
-      i === 0 ? calendarLinkInput.value : '',
-      i === 0 ? now.toISOString() : ''
-    ]);
-  });
-  const csv = lines.map(row => row.map(cell => '"' + String(cell).replace(/"/g,'""') + '"').join(',')).join('\n');
-  const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url; a.download = 'status-disparo-whatsapp.csv';
-  a.click();
-  URL.revokeObjectURL(url);
+/* nome do arquivo exportado: data (pra ordenar cronologicamente na pasta) + hora + progresso de convites */
+function buildExportFilename(date, sentCount, total){
+  const pad = n => String(n).padStart(2, '0');
+  const dateStr = date.getFullYear() + '-' + pad(date.getMonth() + 1) + '-' + pad(date.getDate());
+  const timeStr = pad(date.getHours()) + 'h' + pad(date.getMinutes());
+  return 'disparo-whatsapp_' + dateStr + '_' + timeStr + '_' + sentCount + '-de-' + total + '-convidados.csv';
+}
 
-  updateLastSavedText(now);
-  try{ await window.storage.set(LAST_SAVED_KEY, now.toISOString()); }catch(e){ /* sem problema, só não persiste entre sessões */ }
+exportBtn.addEventListener('click', async () => {
+  try{
+    const now = new Date();
+    const lines = [['nome','telefone','convite','agendado','link_meet','lembrete','entrevista_realizada','recompensa','status_manual', MSG1_COL_NAME, MSG2_COL_NAME, MSG3_COL_NAME, CALENDAR_LINK_COL_NAME, LAST_SAVED_COL_NAME]];
+    contacts.forEach((c, i) => {
+      const s = getStatus(c.phoneClean);
+      lines.push([
+        c.name, c.phoneRaw,
+        s.sent ? 'enviado' : 'pendente',
+        s.scheduled ? 'sim' : 'não',
+        s.meetLink || '',
+        s.reminderSent ? 'enviado' : 'pendente',
+        s.done ? 'sim' : 'não',
+        s.rewardSent ? 'comunicado' : 'pendente',
+        s.override || '',
+        i === 0 ? messageBox.value : '',
+        i === 0 ? messageBox2.value : '',
+        i === 0 ? messageBox3.value : '',
+        i === 0 ? calendarLinkInput.value : '',
+        i === 0 ? now.toISOString() : ''
+      ]);
+    });
+    const csv = lines.map(row => row.map(cell => '"' + String(cell).replace(/"/g,'""') + '"').join(',')).join('\n');
+    const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
+    const url = URL.createObjectURL(blob);
+    const sentCount = contacts.filter(c => getStatus(c.phoneClean).sent).length;
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = buildExportFilename(now, sentCount, contacts.length);
+    a.target = '_blank';
+    a.rel = 'noopener';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(url), 2000);
+
+    updateLastSavedText(now);
+    try{ await window.storage.set(LAST_SAVED_KEY, now.toISOString()); }catch(e){ /* sem problema, só não persiste entre sessões */ }
+  }catch(err){
+    console.error(err);
+    alert('Não consegui gerar o arquivo de progresso. Confira o console do navegador para detalhes.');
+  }
 });
 
 resetBtn.addEventListener('click', async () => {
@@ -1523,6 +1585,7 @@ resetBtn.addEventListener('click', async () => {
 
 refreshStepper();
 updateNameTokenButtonsVisibility();
+updateGenerateBtnEnabled();
 updatePreview();
 updatePreview2();
 updatePreview3();
