@@ -917,6 +917,9 @@ function handleFile(file){
     try{
       detectStatusColumns();
       populateColumnSelectors();
+      updatePreview();
+      updatePreview2();
+      updatePreview3();
       refreshStepper();
       updateGenerateBtnEnabled();
     }catch(err){
@@ -975,10 +978,6 @@ function detectStatusColumns(){
       }
     }
   }
-  updatePreview();
-  updatePreview2();
-  updatePreview3();
-
   reservedColumnNames = [];
   [cols.sent, cols.scheduled, cols.meetLink, cols.reminderSent, cols.done, cols.rewardSent, cols.override, msg1Idx, msg2Idx, msg3Idx, calendarLinkIdx, lastSavedIdx].forEach(idx => {
     if (idx >= 0) reservedColumnNames.push(headers[idx]);
