@@ -338,6 +338,18 @@
   .cell-tag:hover{ opacity:.7; }
   .cell-tag.tag-enviado{ color: var(--blue); background: var(--blue-soft); }
 
+  .phone-editable{ display:inline-block; cursor:pointer; border-radius:4px; }
+  .phone-editable:hover{ color: var(--text); text-decoration: underline; text-underline-offset: 2px; }
+  .phone-empty{ color: var(--accent); font-weight:500; }
+  .phone-edit-wrap{ position:relative; display:block; margin-top:4px; max-width:200px; }
+  .phone-edit-wrap .phone-input{ width:100%; padding-right:56px; }
+  .paste-btn{
+    appearance:none; -webkit-appearance:none; margin:0; border:none;
+    position:absolute; right:4px; top:50%; transform:translateY(-50%);
+    font-family:inherit; font-size:11px; font-weight:600; line-height:1; padding:5px 8px; border-radius:5px;
+    background: var(--accent-soft); color: var(--accent); cursor:pointer;
+  }
+  .paste-btn:hover{ background: var(--accent-soft-strong); }
   .cell-muted{ color: var(--text-3); font-size:13px; }
 
   tbody tr.row-done{ background: var(--green-soft); }
@@ -634,10 +646,15 @@ const themeToggle = document.getElementById('themeToggle');
 function getStatus(phoneClean){
   return statusMap[phoneClean] || { sent:false, scheduled:false, meetLink:'', reminderSent:false, done:false, rewardSent:false, override:null };
 }
+let saveTimer = null;
+function scheduleSave(){
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(saveStatusMap, 400);
+}
 function setStatus(phoneClean, patch){
   const current = getStatus(phoneClean);
   statusMap[phoneClean] = Object.assign({}, current, patch);
-  saveStatusMap();
+  scheduleSave();
   updateLiveStats();
 }
 
@@ -661,7 +678,7 @@ function refreshFilterSnapshot(){
     filterSnapshot = null;
   } else {
     filterSnapshot = new Set(
-      contacts.filter(c => getOverallStatus(getStatus(c.phoneClean)).key === currentFilter).map(c => c.phoneClean)
+      contacts.filter(c => getOverallStatus(getStatus(c.key)).key === currentFilter).map(c => c.key)
     );
   }
 }
@@ -847,10 +864,10 @@ function updateLiveStats(){
   const wrap = document.getElementById('liveStats');
   if (!contacts.length){ wrap.classList.add('hidden'); return; }
   wrap.classList.remove('hidden');
-  const sent = contacts.filter(c => getStatus(c.phoneClean).sent).length;
-  const scheduled = contacts.filter(c => getStatus(c.phoneClean).scheduled).length;
-  const done = contacts.filter(c => getStatus(c.phoneClean).done).length;
-  const rewarded = contacts.filter(c => getStatus(c.phoneClean).rewardSent).length;
+  const sent = contacts.filter(c => getStatus(c.key).sent).length;
+  const scheduled = contacts.filter(c => getStatus(c.key).scheduled).length;
+  const done = contacts.filter(c => getStatus(c.key).done).length;
+  const rewarded = contacts.filter(c => getStatus(c.key).rewardSent).length;
   wrap.innerHTML = [
     ['Enviados', sent + '/' + contacts.length],
     ['Agendados', scheduled],
@@ -1001,16 +1018,15 @@ function updateGenerateBtnLabel(){
   generateBtn.textContent = statusColsDetected ? 'Continuar recrutamento' : 'Iniciar recrutamento';
 }
 
-/* requisitos mínimos: planilha enviada, coluna de telefone escolhida e mensagem de convite escrita */
+/* requisitos mínimos: planilha enviada e mensagem de convite escrita (o telefone pode ser preenchido depois, na tabela) */
 function updateGenerateBtnEnabled(){
   const hasFile = rawRows.length > 0;
-  const hasPhoneCol = phoneColSel.value !== '';
   const hasMessage = messageBox.value.trim() !== '';
-  generateBtn.disabled = !(hasFile && hasPhoneCol && hasMessage);
+  generateBtn.disabled = !(hasFile && hasMessage);
 }
 
 function populateColumnSelectors(){
-  phoneColSel.innerHTML = '';
+  phoneColSel.innerHTML = '<option value="">(nenhuma — adicionar na tabela)</option>';
   nameColSel.innerHTML = '<option value="">(nenhuma)</option>';
   headers.forEach((h, i) => {
     if (reservedColumnNames.includes(h)) return;
@@ -1188,7 +1204,7 @@ presetBtn.addEventListener('click', (e) => {
 
 /* ============================== generate list ============================== */
 generateBtn.addEventListener('click', async () => {
-  const phoneIdx = parseInt(phoneColSel.value, 10);
+  const phoneIdx = phoneColSel.value === '' ? -1 : parseInt(phoneColSel.value, 10);
   const nameIdx = nameColSel.value === '' ? -1 : parseInt(nameColSel.value, 10);
   const message = messageBox.value.trim().normalize('NFC');
   if (!message){ alert('Escreva a mensagem de convite antes de gerar a lista.'); return; }
@@ -1199,7 +1215,7 @@ generateBtn.addEventListener('click', async () => {
   activeNameIdx = nameIdx;
 
   contacts = rawRows.map((row, i) => {
-    const rawPhone = row[phoneIdx] !== undefined ? row[phoneIdx] : '';
+    const rawPhone = phoneIdx >= 0 && row[phoneIdx] !== undefined ? row[phoneIdx] : '';
     const rawName = nameIdx >= 0 && row[nameIdx] !== undefined ? String(row[nameIdx]).trim() : '';
     const {clean, valid} = cleanPhone(rawPhone);
     const firstName = firstNameCapitalized(rawName);
@@ -1207,7 +1223,6 @@ generateBtn.addEventListener('click', async () => {
       ? message.replace(NAME_TOKEN, firstName)
       : message.replace(NAME_TOKEN, '')
     ).replace(LINK_CALENDAR_TOKEN, calendarLink || '(link do calendário não preenchido)');
-    const waLink = clean ? buildWaLink(clean, personalizedMessage) : '';
 
     let csvStatus = null;
     if (statusColsDetected){
@@ -1224,17 +1239,22 @@ generateBtn.addEventListener('click', async () => {
       };
     }
 
+    /* chave fixa do progresso: o próprio telefone quando ele vem da planilha (mantém compatibilidade
+       com progresso já salvo); sem telefone, usa posição + nome, pra não perder o progresso
+       quando o número for digitado depois */
+    const key = clean ? clean : ('sem-tel:' + i + ':' + rawName);
+
     return {
-      id: 'c' + i, name: rawName ? capitalizeFullName(rawName) : '(sem nome)', rawName, firstName,
-      phoneRaw: String(rawPhone), phoneClean: clean, valid, waLink, csvStatus
+      id: 'c' + i, key, phoneFromSheet: !!clean, name: rawName ? capitalizeFullName(rawName) : '(sem nome)', rawName, firstName,
+      phoneRaw: String(rawPhone), phoneClean: clean, valid, inviteMessage: personalizedMessage, csvStatus
     };
   });
 
   await loadStatusMap();
   let recoveredCount = 0;
   contacts.forEach(c => {
-    if (c.csvStatus && !statusMap[c.phoneClean]){
-      statusMap[c.phoneClean] = Object.assign(
+    if (c.csvStatus && !statusMap[c.key]){
+      statusMap[c.key] = Object.assign(
         { sent:false, scheduled:false, meetLink:'', reminderSent:false, done:false, rewardSent:false, override:null },
         c.csvStatus
       );
@@ -1242,6 +1262,10 @@ generateBtn.addEventListener('click', async () => {
     }
   });
   if (recoveredCount > 0) await saveStatusMap();
+  contacts.forEach(c => {
+    const manual = getStatus(c.key).manualPhone;
+    if (manual) applyPhoneToContact(c, manual);
+  });
 
   document.getElementById('listCount').textContent = contacts.length + ' contato' + (contacts.length === 1 ? '' : 's');
   step3.classList.remove('hidden');
@@ -1255,9 +1279,20 @@ generateBtn.addEventListener('click', async () => {
   step3.scrollIntoView({behavior:'smooth', block:'start'});
 });
 
+function buildInviteLink(contact){
+  return contact.valid && contact.phoneClean ? buildWaLink(contact.phoneClean, contact.inviteMessage) : '';
+}
+
+function applyPhoneToContact(contact, raw){
+  const {clean, valid} = cleanPhone(raw);
+  contact.phoneRaw = String(raw);
+  contact.phoneClean = clean;
+  contact.valid = valid;
+}
+
 function buildReminderLink(contact){
   if (!contact.valid || !reminderTemplate) return '';
-  const status = getStatus(contact.phoneClean);
+  const status = getStatus(contact.key);
   let msg = activeNameIdx >= 0
     ? reminderTemplate.replace(NAME_TOKEN, contact.firstName || '')
     : reminderTemplate.replace(NAME_TOKEN, '');
@@ -1276,6 +1311,7 @@ function buildRewardLink(contact){
 
 /* ============================== persistence ============================== */
 async function loadStatusMap(){
+  if (saveTimer){ clearTimeout(saveTimer); saveTimer = null; await saveStatusMap(); }
   try{
     const res = await window.storage.get(STORAGE_KEY);
     if (res && res.value){ statusMap = JSON.parse(res.value); return; }
@@ -1353,24 +1389,97 @@ function buildStatusMenu(c, status, overall){
   const menu = document.createElement('div');
   menu.className = 'status-menu';
   menu.appendChild(statusMenuOption('Marcar como Concluído', 'opt-concluido', () => {
-    setStatus(c.phoneClean, {override:'concluido'}); renderTable();
+    setStatus(c.key, {override:'concluido'}); renderTable();
   }));
   menu.appendChild(statusMenuOption('Marcar como Sem êxito', 'opt-sem-exito', () => {
-    setStatus(c.phoneClean, {override:'sem_exito'}); renderTable();
+    setStatus(c.key, {override:'sem_exito'}); renderTable();
   }));
   if (status.override){
     menu.appendChild(statusMenuOption('Voltar ao automático', 'opt-reset', () => {
-      setStatus(c.phoneClean, {override:null}); renderTable();
+      setStatus(c.key, {override:null}); renderTable();
     }));
   }
   wrap.appendChild(menu);
   return wrap;
 }
 
+/* número do contato: clique para adicionar ou corrigir direto na tabela */
+function buildPhoneField(c){
+  const hasPhone = !!c.phoneClean;
+  const display = document.createElement('span');
+  display.className = 'contact-phone phone-editable' + (hasPhone ? '' : ' phone-empty');
+  display.textContent = hasPhone ? formatPhoneDisplay(c.phoneClean, c.phoneRaw) : '+ Adicionar número';
+  display.title = hasPhone ? 'Clique para editar o número' : 'Clique para adicionar o número';
+  display.setAttribute('role', 'button');
+  display.tabIndex = 0;
+
+  const startEdit = () => {
+    const wrap = document.createElement('span');
+    wrap.className = 'phone-edit-wrap';
+    const input = document.createElement('input');
+    input.type = 'tel';
+    input.className = 'link-input phone-input';
+    input.placeholder = '(11) 91234-5678';
+    input.value = hasPhone ? c.phoneRaw : '';
+    const pasteBtn = document.createElement('button');
+    pasteBtn.type = 'button';
+    pasteBtn.className = 'paste-btn';
+    pasteBtn.textContent = 'Colar';
+    pasteBtn.title = 'Colar número copiado';
+    wrap.appendChild(input);
+    wrap.appendChild(pasteBtn);
+
+    let done = false;
+    let pasting = false;
+    const original = hasPhone ? c.phoneRaw : '';
+    const finish = (save) => {
+      if (done) return;
+      done = true;
+      const value = input.value.trim();
+      if (save && value !== original){
+        applyPhoneToContact(c, value);
+        const patch = {manualPhone: value};
+        if (!c.phoneFromSheet && value && !getStatus(c.key).sent){
+          patch.sent = true;
+          patch.scheduled = true;
+        }
+        setStatus(c.key, patch);
+      }
+      setTimeout(() => refreshRow(c), 0);
+    };
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter'){ e.preventDefault(); finish(true); }
+      if (e.key === 'Escape'){ e.preventDefault(); finish(false); }
+    });
+    input.addEventListener('blur', () => { if (!pasting) finish(true); });
+
+    /* mantém o foco no campo ao clicar em "Colar" */
+    pasteBtn.addEventListener('mousedown', (e) => e.preventDefault());
+    pasteBtn.addEventListener('click', async () => {
+      pasting = true;
+      try{
+        const text = (await navigator.clipboard.readText()).trim();
+        if (text){ input.value = text; pasting = false; finish(true); return; }
+      }catch(e){ /* navegador bloqueou a leitura da área de transferência */ }
+      pasting = false;
+      input.placeholder = 'Use Ctrl+V (ou ⌘+V) para colar';
+      input.focus();
+    });
+
+    display.replaceWith(wrap);
+    input.focus();
+  };
+  display.addEventListener('click', startEdit);
+  display.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' || e.key === ' '){ e.preventDefault(); startEdit(); }
+  });
+  return display;
+}
+
 function renderTable(){
   const q = searchBox.value.trim().toLowerCase();
   let rows = contacts.filter(c => {
-    if (filterSnapshot && !filterSnapshot.has(c.phoneClean)) return false;
+    if (filterSnapshot && !filterSnapshot.has(c.key)) return false;
     if (q && !(c.name.toLowerCase().includes(q) || c.phoneRaw.toLowerCase().includes(q))) return false;
     return true;
   });
@@ -1378,10 +1487,21 @@ function renderTable(){
   tbody.innerHTML = '';
   emptyState.classList.toggle('hidden', rows.length > 0);
 
-  rows.forEach(c => {
-    const status = getStatus(c.phoneClean);
+  rows.forEach(c => tbody.appendChild(buildRow(c)));
+}
+
+/* atualiza só a linha de um contato (sem redesenhar a tabela inteira) */
+function refreshRow(c){
+  const current = tbody.querySelector('tr[data-key="' + CSS.escape(c.key) + '"]');
+  if (current) current.replaceWith(buildRow(c));
+  else renderTable();
+}
+
+function buildRow(c){
+    const status = getStatus(c.key);
     const overall = getOverallStatus(status);
     const tr = document.createElement('tr');
+    tr.dataset.key = c.key;
     if (status.done) tr.classList.add('row-done');
 
     /* ---- status geral (primeira coluna); clicável para marcar manualmente Concluído/Sem êxito ---- */
@@ -1394,10 +1514,8 @@ function renderTable(){
     tdContact.className = 'col-contact';
     const nameDiv = document.createElement('div');
     nameDiv.className = 'contact-name'; nameDiv.textContent = c.name;
-    const phoneDiv = document.createElement('div');
-    phoneDiv.className = 'contact-phone'; phoneDiv.textContent = formatPhoneDisplay(c.phoneClean, c.phoneRaw);
-    tdContact.appendChild(nameDiv); tdContact.appendChild(phoneDiv);
-    if (!c.valid){
+    tdContact.appendChild(nameDiv); tdContact.appendChild(buildPhoneField(c));
+    if (!c.valid && c.phoneClean){
       const inv = document.createElement('div');
       inv.className = 'badge-invalid'; inv.textContent = 'Conferir número';
       tdContact.appendChild(inv);
@@ -1407,18 +1525,19 @@ function renderTable(){
     const tdInvite = document.createElement('td');
     tdInvite.className = 'col-switch';
     if (!status.sent){
-      tdInvite.appendChild(cellActionBtn('Convidar', !!c.waLink, c.waLink,
-        c.waLink ? 'Abrir no WhatsApp' : 'Conferir número',
-        () => { setStatus(c.phoneClean, {sent:true}); renderTable(); }));
+      const inviteLink = buildInviteLink(c);
+      tdInvite.appendChild(cellActionBtn('Convidar', !!inviteLink, inviteLink,
+        inviteLink ? 'Abrir no WhatsApp' : (c.phoneClean ? 'Conferir número' : 'Adicione o número do contato'),
+        () => { setStatus(c.key, {sent:true}); renderTable(); }));
     } else {
-      tdInvite.appendChild(cellTag('Enviado', 'tag-enviado', () => { setStatus(c.phoneClean, {sent:false}); renderTable(); }));
+      tdInvite.appendChild(cellTag('Enviado', 'tag-enviado', () => { setStatus(c.key, {sent:false}); renderTable(); }));
     }
 
     /* ---- agendado: só aparece depois do convite ---- */
     const tdSched = document.createElement('td');
     tdSched.className = 'col-switch';
     if (status.sent){
-      tdSched.appendChild(makeSwitch(status.scheduled, false, (val) => { setStatus(c.phoneClean, {scheduled:val}); renderTable(); }));
+      tdSched.appendChild(makeSwitch(status.scheduled, false, (val) => { setStatus(c.key, {scheduled:val}); renderTable(); }));
     } else {
       tdSched.appendChild(mutedCell());
     }
@@ -1431,7 +1550,7 @@ function renderTable(){
       meetInput.type = 'text'; meetInput.className = 'link-input';
       meetInput.placeholder = 'https://';
       meetInput.value = status.meetLink || '';
-      meetInput.addEventListener('change', () => { setStatus(c.phoneClean, {meetLink: normalizeMeetLink(meetInput.value)}); renderTable(); });
+      meetInput.addEventListener('change', () => { setStatus(c.key, {meetLink: normalizeMeetLink(meetInput.value)}); renderTable(); });
       tdMeet.appendChild(meetInput);
     } else {
       tdMeet.appendChild(mutedCell());
@@ -1446,9 +1565,9 @@ function renderTable(){
         const canRemind = c.valid && !!reminderTemplate && (!reminderNeedsLink || status.meetLink);
         tdReminder.appendChild(cellActionBtn('Lembrar', canRemind, canRemind ? buildReminderLink(c) : '',
           canRemind ? 'Abrir no WhatsApp' : 'Escreva a mensagem de confirmação e preencha o link do Meet',
-          () => { setStatus(c.phoneClean, {reminderSent:true}); renderTable(); }));
+          () => { setStatus(c.key, {reminderSent:true}); renderTable(); }));
       } else {
-        tdReminder.appendChild(cellTag('Enviado', 'tag-enviado', () => { setStatus(c.phoneClean, {reminderSent:false}); renderTable(); }));
+        tdReminder.appendChild(cellTag('Enviado', 'tag-enviado', () => { setStatus(c.key, {reminderSent:false}); renderTable(); }));
       }
     } else {
       tdReminder.appendChild(mutedCell());
@@ -1458,7 +1577,7 @@ function renderTable(){
     const tdDone = document.createElement('td');
     tdDone.className = 'col-switch';
     if (status.reminderSent){
-      tdDone.appendChild(makeSwitch(status.done, false, (val) => { setStatus(c.phoneClean, {done:val}); renderTable(); }));
+      tdDone.appendChild(makeSwitch(status.done, false, (val) => { setStatus(c.key, {done:val}); renderTable(); }));
     } else {
       tdDone.appendChild(mutedCell());
     }
@@ -1471,9 +1590,9 @@ function renderTable(){
         const canReward = c.valid && !!rewardTemplate;
         tdReward.appendChild(cellActionBtn('Comunicar', canReward, canReward ? buildRewardLink(c) : '',
           canReward ? 'Abrir no WhatsApp' : 'Escreva a mensagem de recompensa e preencha o valor',
-          () => { setStatus(c.phoneClean, {rewardSent:true}); renderTable(); }));
+          () => { setStatus(c.key, {rewardSent:true}); renderTable(); }));
       } else {
-        tdReward.appendChild(cellTag('Enviado', 'tag-enviado', () => { setStatus(c.phoneClean, {rewardSent:false}); renderTable(); }));
+        tdReward.appendChild(cellTag('Enviado', 'tag-enviado', () => { setStatus(c.key, {rewardSent:false}); renderTable(); }));
       }
     } else {
       tdReward.appendChild(mutedCell());
@@ -1481,8 +1600,7 @@ function renderTable(){
 
     tr.appendChild(tdStatus); tr.appendChild(tdContact); tr.appendChild(tdInvite); tr.appendChild(tdSched);
     tr.appendChild(tdMeet); tr.appendChild(tdReminder); tr.appendChild(tdDone); tr.appendChild(tdReward);
-    tbody.appendChild(tr);
-  });
+    return tr;
 }
 
 document.getElementById('filterTabs').addEventListener('click', (e) => {
@@ -1533,7 +1651,7 @@ exportBtn.addEventListener('click', async () => {
     const now = new Date();
     const lines = [['nome','telefone','convite','agendado','link_meet','lembrete','entrevista_realizada','recompensa','status_manual', MSG1_COL_NAME, MSG2_COL_NAME, MSG3_COL_NAME, CALENDAR_LINK_COL_NAME, LAST_SAVED_COL_NAME]];
     contacts.forEach((c, i) => {
-      const s = getStatus(c.phoneClean);
+      const s = getStatus(c.key);
       lines.push([
         c.name, c.phoneRaw,
         s.sent ? 'enviado' : 'pendente',
@@ -1553,7 +1671,7 @@ exportBtn.addEventListener('click', async () => {
     const csv = lines.map(row => row.map(cell => '"' + String(cell).replace(/"/g,'""') + '"').join(',')).join('\n');
     const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
     const url = URL.createObjectURL(blob);
-    const sentCount = contacts.filter(c => getStatus(c.phoneClean).sent).length;
+    const sentCount = contacts.filter(c => getStatus(c.key).sent).length;
     const a = document.createElement('a');
     a.href = url;
     a.download = buildExportFilename(now, sentCount, contacts.length);
